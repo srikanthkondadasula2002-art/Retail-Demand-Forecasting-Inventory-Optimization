@@ -79,7 +79,7 @@ with st.sidebar:
     st.markdown("👤 Person 2 — ML & Forecasting")
     st.markdown("👤 Person 3 — Dashboard")
     st.markdown("---")
-    st.caption("v1.0 · Day 4 Build")
+    st.caption("v1.0 · Day 5 Build")
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ if page == "🏠 Overview":
     a, b = st.columns(2)
     with a:
         st.info("📊 **Sales Analytics** — KPIs, trends, store & product-wise sales with interactive filters")
-        st.info("🔮 **Demand Forecasting** — Prophet & LightGBM 30-day predictions")
+        st.info("🔮 **Demand Forecasting** — Historical sales analysis & multi-horizon prediction engine")
     with b:
         st.info("📦 **Inventory Optimization** — Safety stock & reorder points")
         st.info("🎯 **What-If Scenario** — Price-drop impact simulation")
@@ -203,7 +203,7 @@ if page == "🏠 Overview":
         "Day 2 — UI & Navigation":   100,
         "Day 3 — Sales Analytics":   100,
         "Day 4 — Filters & Product Viz": 100,
-        "Day 5 — Forecasting Page":    0,
+        "Day 5 — Forecasting Page":  100,
         "Day 6 — Forecast Visuals":    0,
         "Day 7 — Inventory Dashboard": 0,
         "Day 8 — What-If Analysis":    0,
@@ -214,7 +214,7 @@ if page == "🏠 Overview":
         st.progress(pct / 100)
 
 
-# ── Sales Analytics (with Day 4 Interactive Filters) ─────────────────────────
+# ── Sales Analytics ──────────────────────────────────────────────────────────
 elif page == "📊 Sales Analytics":
     page_header("📊 Sales Analytics", "Store-wise and product-wise sales KPIs, interactive filters and rankings")
 
@@ -230,7 +230,6 @@ elif page == "📊 Sales Analytics":
         all_cats = sorted(df_sales["category"].unique().tolist())
         sel_cats = st.multiselect("🏷️ Category", all_cats, default=all_cats)
 
-    # Dynamic department filter based on category selection
     avail_depts = []
     for c in sel_cats:
         avail_depts.extend(DEPT_MAP.get(c, []))
@@ -305,7 +304,6 @@ elif page == "📊 Sales Analytics":
     st.markdown("---")
     col_a, col_b = st.columns(2)
 
-    # Sales by Department Breakdown
     with col_a:
         st.markdown("### 🗂️ Sales by Department")
         dept_data = df_filtered.groupby("department")["units"].sum().reset_index()
@@ -315,7 +313,6 @@ elif page == "📊 Sales Analytics":
         fig_dept.update_layout(height=320, paper_bgcolor="white")
         st.plotly_chart(fig_dept, use_container_width=True)
 
-    # Sales by Store Comparison
     with col_b:
         st.markdown("### 🏪 Sales by Store")
         store_data = (df_filtered.groupby("store")["units"].sum()
@@ -330,7 +327,7 @@ elif page == "📊 Sales Analytics":
 
     st.markdown("---")
 
-    # ── Product-Wise Sales Visualizations (Day 4 Deliverable) ────────────────
+    # Product-Wise Sales Visualizations
     st.markdown("### 🏆 Product-Wise Performance & Velocity Leaderboard")
     
     prod_filter = df_products.copy()
@@ -360,7 +357,6 @@ elif page == "📊 Sales Analytics":
         fig_rev.update_layout(height=350, plot_bgcolor="white", yaxis={'categoryorder':'total ascending'})
         st.plotly_chart(fig_rev, use_container_width=True)
 
-    # Detailed Table with Download
     with st.expander("📋 View Full Product Sales Table & Export"):
         st.dataframe(prod_filter[["item_id", "item_name", "category", "department", "base_price", "annual_units", "annual_revenue"]].sort_values("annual_revenue", ascending=False), use_container_width=True)
         csv_data = prod_filter.to_csv(index=False).encode('utf-8')
@@ -372,11 +368,90 @@ elif page == "📊 Sales Analytics":
         )
 
 
-# ── Placeholder Pages ─────────────────────────────────────────────────────────
+# ── Demand Forecasting (Day 5 Deliverable) ───────────────────────────────────
 elif page == "🔮 Demand Forecasting":
-    page_header("🔮 Demand Forecasting", "Prophet & LightGBM 30-day demand predictions")
-    st.info("🔧 Coming on Day 5 & 6 — Forecasting visualizations will be added here.")
+    page_header("🔮 Demand Forecasting", "Historical sales profiling and multi-horizon demand prediction engine")
 
+    # Forecasting Configuration Controls
+    st.markdown("#### ⚙️ Forecast & Scope Configuration")
+    fc1, fc2, fc3, fc4 = st.columns([1.5, 1.5, 1.5, 2])
+    
+    with fc1:
+        sel_fc_store = st.selectbox("🏬 Target Store", ["CA_1", "CA_2", "CA_3", "CA_4", "TX_1", "TX_2", "TX_3", "WI_1", "WI_2", "WI_3"], index=0)
+    with fc2:
+        sel_horizon = st.selectbox("📅 Forecast Horizon", ["7 Days", "14 Days", "21 Days", "28 Days", "30 Days"], index=3)
+    with fc3:
+        sel_model = st.selectbox("🤖 Machine Learning Model", ["LightGBM (Tweedie GBDT)", "Facebook Prophet", "Ensemble (Blended)"], index=0)
+    with fc4:
+        lookback_window = st.select_slider("⏪ Historical Training Window", options=["30 Days", "60 Days", "90 Days", "180 Days", "365 Days", "Full History"], value="180 Days")
+
+    st.markdown("---")
+
+    # Historical Sales Data for Target Store
+    df_store = df_sales[df_sales["store"] == sel_fc_store].groupby("date")["units"].sum().reset_index()
+    
+    # Filter by lookback window
+    max_d = df_store["date"].max()
+    window_days_map = {
+        "30 Days": 30, "60 Days": 60, "90 Days": 90,
+        "180 Days": 180, "365 Days": 365, "Full History": 9999
+    }
+    days_back = window_days_map[lookback_window]
+    df_history = df_store[df_store["date"] >= (max_d - pd.Timedelta(days=days_back))].copy()
+
+    # Historical Metrics Cards
+    mean_demand = df_history["units"].mean()
+    std_demand = df_history["units"].std()
+    peak_demand = df_history["units"].max()
+    cv_demand = (std_demand / mean_demand) * 100 if mean_demand > 0 else 0
+
+    m1, m2, m3, m4 = st.columns(4)
+    with m1: metric_card(f"{mean_demand:,.0f} units", "Avg Daily Demand (μ)")
+    with m2: metric_card(f"± {std_demand:,.0f} units", "Demand Volatility (σ)")
+    with m3: metric_card(f"{cv_demand:.1f}%", "Coeff. of Variation (CV)")
+    with m4: metric_card(f"{peak_demand:,.0f} units", "Historical Peak Day")
+
+    st.markdown("---")
+
+    # Historical Sales Chart with Moving Averages & Bands
+    st.markdown(f"### 📈 Historical Sales Trajectory — {sel_fc_store} ({lookback_window})")
+    
+    df_history["ma_7"] = df_history["units"].rolling(7).mean()
+    df_history["ma_28"] = df_history["units"].rolling(28).mean()
+    df_history["std_28"] = df_history["units"].rolling(28).std()
+    df_history["upper_band"] = df_history["ma_28"] + (1.96 * df_history["std_28"])
+    df_history["lower_band"] = (df_history["ma_28"] - (1.96 * df_history["std_28"])).clip(lower=0)
+
+    fig_hist = go.Figure()
+    fig_hist.add_trace(go.Scatter(
+        x=df_history["date"], y=df_history["units"], name="Actual Daily Sales",
+        mode="lines", line=dict(color="#6c757d", width=1), opacity=0.6))
+    fig_hist.add_trace(go.Scatter(
+        x=df_history["date"], y=df_history["ma_7"], name="7-Day Moving Avg",
+        line=dict(color="#0f3460", width=2)))
+    fig_hist.add_trace(go.Scatter(
+        x=df_history["date"], y=df_history["ma_28"], name="28-Day Baseline Trend",
+        line=dict(color="#e94560", width=2.5)))
+    fig_hist.add_trace(go.Scatter(
+        x=df_history["date"], y=df_history["upper_band"], name="Upper Volatility (+2σ)",
+        line=dict(color="rgba(233,69,96,0.2)", width=1, dash="dot"), showlegend=False))
+    fig_hist.add_trace(go.Scatter(
+        x=df_history["date"], y=df_history["lower_band"], name="Demand Volatility Band (95% CI)",
+        fill="tonexty", fillcolor="rgba(233,69,96,0.08)", line=dict(color="rgba(233,69,96,0.2)", width=1, dash="dot")))
+
+    fig_hist.update_layout(
+        height=380, plot_bgcolor="white", paper_bgcolor="white",
+        xaxis_title="Date", yaxis_title="Units Sold",
+        legend=dict(orientation="h", y=1.12, x=0))
+    st.plotly_chart(fig_hist, use_container_width=True)
+
+    st.markdown("---")
+    
+    # Information callout regarding Day 6 integration
+    st.info(f"💡 **Model Integration Notice**: Model architecture configured for **{sel_model}** across **{sel_horizon}** horizon. Prediction curves, out-of-sample actual comparison, and WAPE evaluation metrics are being integrated on Day 6.")
+
+
+# ── Placeholder Pages ─────────────────────────────────────────────────────────
 elif page == "📦 Inventory Optimization":
     page_header("📦 Inventory Optimization", "Safety stock levels and reorder point recommendations")
     st.info("🔧 Coming on Day 7 — Inventory optimization dashboard will be added here.")
