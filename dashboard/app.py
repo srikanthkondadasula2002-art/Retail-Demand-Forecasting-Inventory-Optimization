@@ -5,6 +5,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 
+from components.forecasting_engine import (
+    MODEL_EVALUATION_METRICS,
+    load_forecast_series,
+    get_store_metrics_summary
+)
+
 st.set_page_config(
     page_title="Retail Demand Forecasting",
     page_icon="🛒",
@@ -79,7 +85,7 @@ with st.sidebar:
     st.markdown("👤 Person 2 — ML & Forecasting")
     st.markdown("👤 Person 3 — Dashboard")
     st.markdown("---")
-    st.caption("v1.0 · Day 5 Build")
+    st.caption("v1.0 · Day 6 Build")
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -191,7 +197,7 @@ if page == "🏠 Overview":
     a, b = st.columns(2)
     with a:
         st.info("📊 **Sales Analytics** — KPIs, trends, store & product-wise sales with interactive filters")
-        st.info("🔮 **Demand Forecasting** — Historical sales analysis & multi-horizon prediction engine")
+        st.info("🔮 **Demand Forecasting** — Prophet & LightGBM 30-day predictions & model comparisons")
     with b:
         st.info("📦 **Inventory Optimization** — Safety stock & reorder points")
         st.info("🎯 **What-If Scenario** — Price-drop impact simulation")
@@ -204,7 +210,7 @@ if page == "🏠 Overview":
         "Day 3 — Sales Analytics":   100,
         "Day 4 — Filters & Product Viz": 100,
         "Day 5 — Forecasting Page":  100,
-        "Day 6 — Forecast Visuals":    0,
+        "Day 6 — Forecast Visuals & Metrics": 100,
         "Day 7 — Inventory Dashboard": 0,
         "Day 8 — What-If Analysis":    0,
         "Day 9 — Integration & Testing":0,
@@ -368,9 +374,9 @@ elif page == "📊 Sales Analytics":
         )
 
 
-# ── Demand Forecasting (Day 5 Deliverable) ───────────────────────────────────
+# ── Demand Forecasting (Day 6 Integrated Visualizations) ──────────────────────
 elif page == "🔮 Demand Forecasting":
-    page_header("🔮 Demand Forecasting", "Historical sales profiling and multi-horizon demand prediction engine")
+    page_header("🔮 Demand Forecasting", "Historical sales profiling, Prophet & LightGBM 30-day forecast visualizations")
 
     # Forecasting Configuration Controls
     st.markdown("#### ⚙️ Forecast & Scope Configuration")
@@ -379,76 +385,123 @@ elif page == "🔮 Demand Forecasting":
     with fc1:
         sel_fc_store = st.selectbox("🏬 Target Store", ["CA_1", "CA_2", "CA_3", "CA_4", "TX_1", "TX_2", "TX_3", "WI_1", "WI_2", "WI_3"], index=0)
     with fc2:
-        sel_horizon = st.selectbox("📅 Forecast Horizon", ["7 Days", "14 Days", "21 Days", "28 Days", "30 Days"], index=3)
+        sel_horizon = st.selectbox("📅 Forecast Horizon", ["7 Days", "14 Days", "21 Days", "28 Days", "30 Days"], index=4)
     with fc3:
-        sel_model = st.selectbox("🤖 Machine Learning Model", ["LightGBM (Tweedie GBDT)", "Facebook Prophet", "Ensemble (Blended)"], index=0)
+        sel_model = st.selectbox("🤖 Display Forecast Model", ["Both (Comparison)", "LightGBM (Tweedie GBDT)", "Facebook Prophet", "Ensemble (Blended)"], index=0)
     with fc4:
-        lookback_window = st.select_slider("⏪ Historical Training Window", options=["30 Days", "60 Days", "90 Days", "180 Days", "365 Days", "Full History"], value="180 Days")
+        lookback_window = st.select_slider("⏪ Historical Context Window", options=["30 Days", "60 Days", "90 Days", "180 Days", "Full History"], value="60 Days")
 
     st.markdown("---")
 
-    # Historical Sales Data for Target Store
+    # Load 30-Day Forecast Series
+    h_days = int(sel_horizon.split()[0])
+    df_fc = load_forecast_series(store_id=sel_fc_store, horizon_days=h_days)
+    
+    # Store Evaluation Telemetry
+    store_metrics = MODEL_EVALUATION_METRICS.get(sel_fc_store, MODEL_EVALUATION_METRICS["CA_1"])
+    lgb_wape = store_metrics["lightgbm"]["wape"]
+    prophet_wape = store_metrics["prophet"]["wape"]
+    total_actual = df_fc["actual_units"].sum()
+    total_lgb = df_fc["lightgbm_forecast"].sum()
+    
+    # Model KPI Metric Cards
+    ev1, ev2, ev3, ev4 = st.columns(4)
+    with ev1: metric_card(f"{total_actual:,.0f} units", f"Actual Test Demand ({sel_horizon})")
+    with ev2: metric_card(f"{lgb_wape:.2f}%", "LightGBM Error (WAPE)")
+    with ev3: metric_card(f"{prophet_wape:.2f}%", "Prophet Error (WAPE)")
+    champion_badge = "LightGBM 🏆" if store_metrics["lightgbm"]["winner"] else "Prophet 🏆"
+    with ev4: metric_card(champion_badge, f"Store Best Model ({sel_fc_store})")
+
+    st.markdown("---")
+
+    # Historical Sales Context
     df_store = df_sales[df_sales["store"] == sel_fc_store].groupby("date")["units"].sum().reset_index()
-    
-    # Filter by lookback window
     max_d = df_store["date"].max()
-    window_days_map = {
-        "30 Days": 30, "60 Days": 60, "90 Days": 90,
-        "180 Days": 180, "365 Days": 365, "Full History": 9999
-    }
-    days_back = window_days_map[lookback_window]
-    df_history = df_store[df_store["date"] >= (max_d - pd.Timedelta(days=days_back))].copy()
+    window_days_map = {"30 Days": 30, "60 Days": 60, "90 Days": 90, "180 Days": 180, "Full History": 9999}
+    df_hist_tail = df_store[df_store["date"] >= (max_d - pd.Timedelta(days=window_days_map[lookback_window]))]
 
-    # Historical Metrics Cards
-    mean_demand = df_history["units"].mean()
-    std_demand = df_history["units"].std()
-    peak_demand = df_history["units"].max()
-    cv_demand = (std_demand / mean_demand) * 100 if mean_demand > 0 else 0
+    # Forecast Visualizations Chart (Day 6 Deliverable)
+    st.markdown(f"### 📈 Predicted vs Actual Demand Trajectory ({sel_fc_store})")
+    fig_pred = go.Figure()
 
-    m1, m2, m3, m4 = st.columns(4)
-    with m1: metric_card(f"{mean_demand:,.0f} units", "Avg Daily Demand (μ)")
-    with m2: metric_card(f"± {std_demand:,.0f} units", "Demand Volatility (σ)")
-    with m3: metric_card(f"{cv_demand:.1f}%", "Coeff. of Variation (CV)")
-    with m4: metric_card(f"{peak_demand:,.0f} units", "Historical Peak Day")
+    # Historical line
+    fig_pred.add_trace(go.Scatter(
+        x=df_hist_tail["date"], y=df_hist_tail["units"],
+        name="Historical Actuals", mode="lines",
+        line=dict(color="#adb5bd", width=1.5)))
 
-    st.markdown("---")
+    # Ground Truth Actual in test horizon
+    fig_pred.add_trace(go.Scatter(
+        x=df_fc["date"], y=df_fc["actual_units"],
+        name="Out-of-Sample Actuals", mode="lines+markers",
+        line=dict(color="#1a1a2e", width=2.5), marker=dict(size=4)))
 
-    # Historical Sales Chart with Moving Averages & Bands
-    st.markdown(f"### 📈 Historical Sales Trajectory — {sel_fc_store} ({lookback_window})")
-    
-    df_history["ma_7"] = df_history["units"].rolling(7).mean()
-    df_history["ma_28"] = df_history["units"].rolling(28).mean()
-    df_history["std_28"] = df_history["units"].rolling(28).std()
-    df_history["upper_band"] = df_history["ma_28"] + (1.96 * df_history["std_28"])
-    df_history["lower_band"] = (df_history["ma_28"] - (1.96 * df_history["std_28"])).clip(lower=0)
+    # LightGBM Forecast
+    if sel_model in ["Both (Comparison)", "LightGBM (Tweedie GBDT)"]:
+        fig_pred.add_trace(go.Scatter(
+            x=df_fc["date"], y=df_fc["lightgbm_forecast"],
+            name="LightGBM GBDT Forecast", mode="lines",
+            line=dict(color="#e94560", width=2.5, dash="solid")))
 
-    fig_hist = go.Figure()
-    fig_hist.add_trace(go.Scatter(
-        x=df_history["date"], y=df_history["units"], name="Actual Daily Sales",
-        mode="lines", line=dict(color="#6c757d", width=1), opacity=0.6))
-    fig_hist.add_trace(go.Scatter(
-        x=df_history["date"], y=df_history["ma_7"], name="7-Day Moving Avg",
-        line=dict(color="#0f3460", width=2)))
-    fig_hist.add_trace(go.Scatter(
-        x=df_history["date"], y=df_history["ma_28"], name="28-Day Baseline Trend",
-        line=dict(color="#e94560", width=2.5)))
-    fig_hist.add_trace(go.Scatter(
-        x=df_history["date"], y=df_history["upper_band"], name="Upper Volatility (+2σ)",
-        line=dict(color="rgba(233,69,96,0.2)", width=1, dash="dot"), showlegend=False))
-    fig_hist.add_trace(go.Scatter(
-        x=df_history["date"], y=df_history["lower_band"], name="Demand Volatility Band (95% CI)",
-        fill="tonexty", fillcolor="rgba(233,69,96,0.08)", line=dict(color="rgba(233,69,96,0.2)", width=1, dash="dot")))
+    # Prophet Forecast & Uncertainty Band
+    if sel_model in ["Both (Comparison)", "Facebook Prophet"]:
+        fig_pred.add_trace(go.Scatter(
+            x=df_fc["date"], y=df_fc["prophet_upper"],
+            name="Prophet Upper Band (95% CI)",
+            line=dict(color="rgba(15,52,96,0.2)", width=1, dash="dot"), showlegend=False))
+        fig_pred.add_trace(go.Scatter(
+            x=df_fc["date"], y=df_fc["prophet_lower"],
+            name="Prophet 95% Confidence Band",
+            fill="tonexty", fillcolor="rgba(15,52,96,0.12)",
+            line=dict(color="rgba(15,52,96,0.2)", width=1, dash="dot")))
+        fig_pred.add_trace(go.Scatter(
+            x=df_fc["date"], y=df_fc["prophet_forecast"],
+            name="Prophet Forecast", mode="lines",
+            line=dict(color="#0f3460", width=2.5, dash="dash")))
 
-    fig_hist.update_layout(
-        height=380, plot_bgcolor="white", paper_bgcolor="white",
-        xaxis_title="Date", yaxis_title="Units Sold",
+    # Ensemble Forecast
+    if sel_model == "Ensemble (Blended)":
+        fig_pred.add_trace(go.Scatter(
+            x=df_fc["date"], y=df_fc["ensemble_forecast"],
+            name="Ensemble (50/50 Blend)", mode="lines",
+            line=dict(color="#27ae60", width=3, dash="solid")))
+
+    fig_pred.update_layout(
+        height=420, plot_bgcolor="white", paper_bgcolor="white",
+        xaxis_title="Date", yaxis_title="Units Demanded",
         legend=dict(orientation="h", y=1.12, x=0))
-    st.plotly_chart(fig_hist, use_container_width=True)
+    st.plotly_chart(fig_pred, use_container_width=True)
 
     st.markdown("---")
-    
-    # Information callout regarding Day 6 integration
-    st.info(f"💡 **Model Integration Notice**: Model architecture configured for **{sel_model}** across **{sel_horizon}** horizon. Prediction curves, out-of-sample actual comparison, and WAPE evaluation metrics are being integrated on Day 6.")
+    res_col1, res_col2 = st.columns(2)
+
+    with res_col1:
+        st.markdown("#### 🎯 Prediction Residual Errors (LightGBM)")
+        df_fc["residual"] = df_fc["lightgbm_forecast"] - df_fc["actual_units"]
+        fig_res = px.bar(
+            df_fc, x="date", y="residual",
+            color="residual",
+            color_continuous_scale=["#e94560", "#adb5bd", "#0f3460"],
+            title=f"Residual Error (Predicted - Actual) for {sel_fc_store}")
+        fig_res.update_layout(height=300, plot_bgcolor="white", coloraxis_showscale=False)
+        st.plotly_chart(fig_res, use_container_width=True)
+
+    with res_col2:
+        st.markdown("#### 📊 Cumulative Demand Volume Tracking")
+        df_fc["cum_actual"] = df_fc["actual_units"].cumsum()
+        df_fc["cum_lgb"] = df_fc["lightgbm_forecast"].cumsum()
+        df_fc["cum_prophet"] = df_fc["prophet_forecast"].cumsum()
+        fig_cum = go.Figure()
+        fig_cum.add_trace(go.Scatter(x=df_fc["date"], y=df_fc["cum_actual"], name="Actual Cumulative", line=dict(color="#1a1a2e", width=2)))
+        fig_cum.add_trace(go.Scatter(x=df_fc["date"], y=df_fc["cum_lgb"], name="LightGBM Cumulative", line=dict(color="#e94560", width=2, dash="dash")))
+        fig_cum.add_trace(go.Scatter(x=df_fc["date"], y=df_fc["cum_prophet"], name="Prophet Cumulative", line=dict(color="#0f3460", width=2, dash="dot")))
+        fig_cum.update_layout(height=300, plot_bgcolor="white", legend=dict(orientation="h", y=1.15))
+        st.plotly_chart(fig_cum, use_container_width=True)
+
+    st.markdown("---")
+    st.markdown("### 🏆 Comprehensive Model Evaluation Matrix across All 10 Stores")
+    df_metrics_summary = get_store_metrics_summary()
+    st.dataframe(df_metrics_summary, use_container_width=True)
 
 
 # ── Placeholder Pages ─────────────────────────────────────────────────────────
