@@ -10,6 +10,10 @@ from components.forecasting_engine import (
     load_forecast_series,
     get_store_metrics_summary
 )
+from components.inventory_engine import (
+    generate_inventory_recommendations,
+    SERVICE_LEVEL_Z
+)
 
 st.set_page_config(
     page_title="Retail Demand Forecasting",
@@ -85,7 +89,7 @@ with st.sidebar:
     st.markdown("👤 Person 2 — ML & Forecasting")
     st.markdown("👤 Person 3 — Dashboard")
     st.markdown("---")
-    st.caption("v1.0 · Day 6 Build")
+    st.caption("v1.0 · Day 7 Build")
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -211,7 +215,7 @@ if page == "🏠 Overview":
         "Day 4 — Filters & Product Viz": 100,
         "Day 5 — Forecasting Page":  100,
         "Day 6 — Forecast Visuals & Metrics": 100,
-        "Day 7 — Inventory Dashboard": 0,
+        "Day 7 — Inventory Dashboard": 100,
         "Day 8 — What-If Analysis":    0,
         "Day 9 — Integration & Testing":0,
         "Day 10 — Final Dashboard":    0,
@@ -504,10 +508,177 @@ elif page == "🔮 Demand Forecasting":
     st.dataframe(df_metrics_summary, use_container_width=True)
 
 
-# ── Placeholder Pages ─────────────────────────────────────────────────────────
+# ── Inventory Optimization (Day 7 Deliverable) ──────────────────────────────
 elif page == "📦 Inventory Optimization":
-    page_header("📦 Inventory Optimization", "Safety stock levels and reorder point recommendations")
-    st.info("🔧 Coming on Day 7 — Inventory optimization dashboard will be added here.")
+    page_header("📦 Inventory Optimization & Replenishment",
+                "Dynamic safety stock, reorder point (ROP), EOQ, and supplier replenishment recommendations")
+
+    # Inventory Control Center Filters
+    st.markdown("#### ⚙️ Inventory Parameters & Store Selection")
+    inv1, inv2, inv3, inv4 = st.columns([1.5, 1.5, 1.5, 1.5])
+    
+    with inv1:
+        sel_inv_store = st.selectbox("🏬 Target Store", ["CA_1", "CA_2", "CA_3", "CA_4", "TX_1", "TX_2", "TX_3", "WI_1", "WI_2", "WI_3"], index=0, key="inv_store")
+    with inv2:
+        sl_options = {0.90: "90% (Low Buffer)", 0.95: "95% (Standard Balanced)", 0.98: "98% (High Availability)", 0.99: "99% (Mission Critical)"}
+        sel_sl = st.selectbox("🎯 Target Service Level", options=list(sl_options.keys()), format_func=lambda x: sl_options[x], index=1)
+    with inv3:
+        sel_order_cost = st.slider("📑 Order Cost / PO ($)", min_value=15.0, max_value=100.0, value=35.0, step=5.0)
+    with inv4:
+        sel_holding_rate = st.slider("🏷️ Annual Holding Cost Rate (%)", min_value=10.0, max_value=40.0, value=22.0, step=2.0)
+
+    # Compute Recommendations
+    df_inv = generate_inventory_recommendations(
+        df_products=df_products,
+        store_id=sel_inv_store,
+        service_level=sel_sl,
+        order_cost_override=sel_order_cost,
+        holding_cost_pct_override=sel_holding_rate
+    )
+
+    # Secondary Filter for Department / Status
+    flt_col1, flt_col2 = st.columns(2)
+    with flt_col1:
+        status_opts = ["All Statuses"] + sorted(df_inv["stock_status"].unique().tolist())
+        sel_status = st.selectbox("🚥 Filter by Stock Health", status_opts, index=0)
+    with flt_col2:
+        inv_cat_opts = ["All Categories"] + sorted(df_inv["category"].unique().tolist())
+        sel_inv_cat = st.selectbox("🏷️ Filter by Category", inv_cat_opts, index=0)
+
+    df_inv_filtered = df_inv.copy()
+    if sel_status != "All Statuses":
+        df_inv_filtered = df_inv_filtered[df_inv_filtered["stock_status"] == sel_status]
+    if sel_inv_cat != "All Categories":
+        df_inv_filtered = df_inv_filtered[df_inv_filtered["category"] == sel_inv_cat]
+
+    st.markdown("---")
+
+    # High-level Inventory KPI Metrics
+    total_skus = len(df_inv)
+    crit_count = len(df_inv[df_inv["stock_status"] == "🔴 Critical Risk"])
+    reorder_count = len(df_inv[df_inv["stock_status"] == "🟡 Reorder Needed"])
+    total_val = df_inv["stock_value"].sum()
+    total_reorder_cost = df_inv["est_order_cost"].sum()
+
+    ik1, ik2, ik3, ik4 = st.columns(4)
+    with ik1: metric_card(f"${total_val:,.2f}", f"On-Hand Inventory Value ({sel_inv_store})")
+    with ik2: metric_card(str(crit_count), "🔴 Critical Stockout Alerts")
+    with ik3: metric_card(str(reorder_count), "🟡 Replenishment Orders Due")
+    with ik4: metric_card(f"${total_reorder_cost:,.2f}", "Recommended PO Spend")
+
+    st.markdown("---")
+
+    # Visualizations: Health Breakdown & Stock vs ROP
+    v_col1, v_col2 = st.columns([1.2, 2.0])
+
+    with v_col1:
+        st.markdown("### 📊 Inventory Health Distribution")
+        status_counts = df_inv["stock_status"].value_counts().reset_index()
+        status_counts.columns = ["Status", "Count"]
+        color_discrete_map = {
+            "🔴 Critical Risk": "#e94560",
+            "🟡 Reorder Needed": "#f39c12",
+            "🟢 Healthy": "#27ae60",
+            "🔵 Overstocked": "#0f3460"
+        }
+        fig_donut = px.pie(
+            status_counts, names="Status", values="Count",
+            color="Status", color_discrete_map=color_discrete_map,
+            hole=0.55
+        )
+        fig_donut.update_layout(height=340, margin=dict(t=20, b=20, l=10, r=10))
+        st.plotly_chart(fig_donut, use_container_width=True)
+
+    with v_col2:
+        st.markdown("### 📦 Stock on Hand vs Safety Stock & ROP")
+        # Bar comparison for display
+        df_chart = df_inv_filtered.head(10).sort_values("current_stock", ascending=False)
+        fig_bars = go.Figure()
+        fig_bars.add_trace(go.Bar(
+            name="Current Stock", x=df_chart["item_name"], y=df_chart["current_stock"],
+            marker_color="#0f3460"))
+        fig_bars.add_trace(go.Bar(
+            name="Reorder Point (ROP)", x=df_chart["item_name"], y=df_chart["reorder_point"],
+            marker_color="#f39c12"))
+        fig_bars.add_trace(go.Bar(
+            name="Safety Stock (SS)", x=df_chart["item_name"], y=df_chart["safety_stock"],
+            marker_color="#e94560"))
+        fig_bars.update_layout(
+            barmode="group", height=340, plot_bgcolor="white",
+            xaxis_tickangle=-25, legend=dict(orientation="h", y=1.12),
+            yaxis_title="Units"
+        )
+        st.plotly_chart(fig_bars, use_container_width=True)
+
+    st.markdown("---")
+
+    # Comprehensive Reorder Recommendations Table
+    st.markdown("### 📋 Automated Reorder Recommendations & Purchase Orders")
+    display_cols = [
+        "item_id", "item_name", "category", "unit_price", "current_stock",
+        "daily_demand", "lead_time_days", "safety_stock", "reorder_point",
+        "stock_status", "reorder_units", "est_order_cost"
+    ]
+    st.dataframe(df_inv_filtered[display_cols].sort_values("reorder_units", ascending=False), use_container_width=True)
+
+    # Export Purchase Order CSV
+    po_csv = df_inv_filtered[display_cols].to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="📥 Export Replenishment Purchase Order (CSV)",
+        data=po_csv,
+        file_name=f"m5_replenishment_po_{sel_inv_store}.csv",
+        mime="text/csv"
+    )
+
+    st.markdown("---")
+
+    # Deep Dive SKU Inspector
+    st.markdown("### 🔬 SKU Inventory Replenishment Deep-Dive")
+    sku_list = df_inv["item_name"].tolist()
+    sel_sku_name = st.selectbox("Select SKU to Inspect", sku_list, index=0)
+    sku_row = df_inv[df_inv["item_name"] == sel_sku_name].iloc[0]
+
+    d1, d2, d3, d4, d5 = st.columns(5)
+    with d1: st.metric("Current Stock", f"{sku_row['current_stock']} units")
+    with d2: st.metric("Safety Stock (SS)", f"{sku_row['safety_stock']} units")
+    with d3: st.metric("Reorder Point (ROP)", f"{sku_row['reorder_point']} units")
+    with d4: st.metric("Economic Order Qty (EOQ)", f"{sku_row['eoq']} units")
+    with d5: st.metric("Days of Supply", f"{sku_row['days_of_supply']} days")
+
+    # Simulated Sawtooth Inventory Cycle Diagram
+    sim_days = 45
+    timeline = pd.date_range("2016-04-25", periods=sim_days, freq="D")
+    stock_traj = []
+    c_stock = sku_row["current_stock"]
+    rate = max(1, int(round(sku_row["daily_demand"])))
+    reorder_placed_day = None
+    lt = sku_row["lead_time_days"]
+    order_qty = sku_row["eoq"]
+
+    for d_idx in range(sim_days):
+        stock_traj.append(c_stock)
+        c_stock = max(0, c_stock - rate)
+        if c_stock <= sku_row["reorder_point"] and reorder_placed_day is None:
+            reorder_placed_day = d_idx
+        if reorder_placed_day is not None and (d_idx - reorder_placed_day) == lt:
+            c_stock += order_qty
+            reorder_placed_day = None
+
+    fig_sawtooth = go.Figure()
+    fig_sawtooth.add_trace(go.Scatter(
+        x=timeline, y=stock_traj, name="Projected On-Hand Stock",
+        line=dict(color="#0f3460", width=2.5)))
+    fig_sawtooth.add_hline(
+        y=sku_row["reorder_point"], line_dash="dash", line_color="#f39c12",
+        annotation_text="Reorder Point (ROP)", annotation_position="top left")
+    fig_sawtooth.add_hline(
+        y=sku_row["safety_stock"], line_dash="dot", line_color="#e94560",
+        annotation_text="Safety Stock (Buffer)", annotation_position="bottom left")
+    fig_sawtooth.update_layout(
+        title=f"Replenishment Cycle (Sawtooth Curve) for {sku_row['item_name']}",
+        height=320, plot_bgcolor="white", xaxis_title="Date", yaxis_title="Units in Stock"
+    )
+    st.plotly_chart(fig_sawtooth, use_container_width=True)
 
 elif page == "🎯 What-If Scenario":
     page_header("🎯 What-If Scenario Analysis", "Simulate price-drop impact on demand forecasts")
