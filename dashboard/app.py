@@ -14,6 +14,10 @@ from components.inventory_engine import (
     generate_inventory_recommendations,
     SERVICE_LEVEL_Z
 )
+from components.scenario_engine import (
+    simulate_price_scenario,
+    CATEGORY_ELASTICITIES
+)
 
 st.set_page_config(
     page_title="Retail Demand Forecasting",
@@ -89,7 +93,7 @@ with st.sidebar:
     st.markdown("👤 Person 2 — ML & Forecasting")
     st.markdown("👤 Person 3 — Dashboard")
     st.markdown("---")
-    st.caption("v1.0 · Day 7 Build")
+    st.caption("v1.0 · Day 8 Build")
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -216,8 +220,8 @@ if page == "🏠 Overview":
         "Day 5 — Forecasting Page":  100,
         "Day 6 — Forecast Visuals & Metrics": 100,
         "Day 7 — Inventory Dashboard": 100,
-        "Day 8 — What-If Analysis":    0,
-        "Day 9 — Integration & Testing":0,
+        "Day 8 — What-If Analysis":    100,
+        "Day 9 — Integration & Testing": 0,
         "Day 10 — Final Dashboard":    0,
     }.items():
         st.markdown(f"**{label}**")
@@ -680,6 +684,181 @@ elif page == "📦 Inventory Optimization":
     )
     st.plotly_chart(fig_sawtooth, use_container_width=True)
 
+# ── What-If Scenario Analysis (Day 8 Deliverable) ───────────────────────────
 elif page == "🎯 What-If Scenario":
-    page_header("🎯 What-If Scenario Analysis", "Simulate price-drop impact on demand forecasts")
-    st.info("🔧 Coming on Day 8 — Price-drop scenario analysis will be added here.")
+    page_header("🎯 What-If Scenario & Price Elasticity Simulation",
+                "Simulate demand surges, revenue trade-offs, and supply-chain buffer requirements under price adjustments")
+
+    # Quick Scenario Preset Bar
+    st.markdown("#### ⚡ Quick Simulation Presets")
+    q_col1, q_col2, q_col3, q_col4 = st.columns(4)
+    if "price_slider_val" not in st.session_state:
+        st.session_state.price_slider_val = -10.0
+
+    with q_col1:
+        if st.button("🏷️ 10% Price Reduction (Promo)", use_container_width=True):
+            st.session_state.price_slider_val = -10.0
+            st.rerun()
+    with q_col2:
+        if st.button("🔥 20% Clearance Sale", use_container_width=True):
+            st.session_state.price_slider_val = -20.0
+            st.rerun()
+    with q_col3:
+        if st.button("📈 5% Inflation Adjustment", use_container_width=True):
+            st.session_state.price_slider_val = 5.0
+            st.rerun()
+    with q_col4:
+        if st.button("🔄 Reset to Baseline (0%)", use_container_width=True):
+            st.session_state.price_slider_val = 0.0
+            st.rerun()
+
+    st.markdown("---")
+
+    # Simulation Controls
+    st.markdown("#### ⚙️ Scenario Configuration Parameters")
+    sc1, sc2, sc3, sc4 = st.columns([1.5, 2.0, 1.5, 1.5])
+
+    with sc1:
+        sel_sc_store = st.selectbox("🏬 Target Store", ["CA_1", "CA_2", "CA_3", "CA_4", "TX_1", "TX_2", "TX_3", "WI_1", "WI_2", "WI_3"], index=0, key="sc_store")
+    with sc2:
+        price_drop = st.slider(
+            "💰 Price Adjustment (%)",
+            min_value=-30.0, max_value=20.0,
+            value=float(st.session_state.price_slider_val),
+            step=1.0, format="%.1f%%"
+        )
+    with sc3:
+        sel_regime = st.selectbox("📊 Elasticity Sensitivity Regime", ["Moderate", "Conservative", "Aggressive"], index=0)
+    with sc4:
+        sel_sc_cat = st.selectbox("🏷️ Category Focus", ["All Categories", "FOODS", "HOUSEHOLD", "HOBBIES"], index=0)
+
+    # Generate baseline forecast series and simulate price change
+    base_fc_30 = load_forecast_series(store_id=sel_sc_store, horizon_days=30)
+    sim_result = simulate_price_scenario(
+        base_forecast_df=base_fc_30,
+        price_change_pct=price_drop,
+        elasticity_regime=sel_regime,
+        category_focus=sel_sc_cat
+    )
+
+    summary = sim_result["summary"]
+    df_sim_traj = sim_result["trajectory_df"]
+    df_cat_matrix = sim_result["category_breakdown"]
+
+    st.markdown("---")
+
+    # High-level Scenario Impact Cards
+    k_sc1, k_sc2, k_sc3, k_sc4 = st.columns(4)
+    with k_sc1:
+        metric_card(f"{summary['price_change_pct']:+.1f}% (${summary['simulated_price']:.2f})", "Simulated Price Shift")
+    with k_sc2:
+        lift_sign = "+" if summary['pct_unit_lift'] >= 0 else ""
+        metric_card(f"{lift_sign}{summary['pct_unit_lift']:.1f}% ({summary['unit_lift_total']:+,.0f} units)", "Projected Demand Lift")
+    with k_sc3:
+        rev_sign = "+" if summary['rev_delta'] >= 0 else ""
+        metric_card(f"{rev_sign}${summary['rev_delta']:,.2f} ({rev_sign}{summary['pct_rev_delta']:.1f}%)", "Total Revenue Impact")
+    with k_sc4:
+        m_sign = "+" if summary['margin_delta'] >= 0 else ""
+        metric_card(f"{m_sign}${summary['margin_delta']:,.2f} ({m_sign}{summary['pct_margin_delta']:.1f}%)", "Net Gross Margin Impact")
+
+    st.markdown("---")
+
+    # Main Visual: Baseline Forecast vs Price-Adjusted Forecast
+    st.markdown(f"### 📈 30-Day Demand Trajectory: Baseline vs {summary['price_change_pct']:+.1f}% Price Shift")
+    fig_sim = go.Figure()
+
+    # Baseline LightGBM Forecast
+    fig_sim.add_trace(go.Scatter(
+        x=df_sim_traj["date"], y=df_sim_traj["base_forecast"],
+        name="Baseline Demand Forecast", mode="lines",
+        line=dict(color="#1a1a2e", width=2.5, dash="dash")
+    ))
+
+    # Simulated Trajectory
+    sim_line_color = "#e94560" if price_drop < 0 else "#27ae60"
+    fig_sim.add_trace(go.Scatter(
+        x=df_sim_traj["date"], y=df_sim_traj["simulated_demand"],
+        name=f"Price Adjusted Demand ({price_drop:+.1f}%)", mode="lines+markers",
+        line=dict(color=sim_line_color, width=3),
+        marker=dict(size=4)
+    ))
+
+    # Shaded Uplift Region
+    fig_sim.add_trace(go.Scatter(
+        x=df_sim_traj["date"], y=df_sim_traj["simulated_demand"],
+        line=dict(width=0), showlegend=False, hoverinfo="skip"
+    ))
+    fig_sim.add_trace(go.Scatter(
+        x=df_sim_traj["date"], y=df_sim_traj["base_forecast"],
+        fill="tonexty",
+        fillcolor="rgba(233, 69, 96, 0.15)" if price_drop < 0 else "rgba(39, 174, 96, 0.15)",
+        line=dict(width=0),
+        name="Demand Volume Shift (Uplift / Drop)",
+        hoverinfo="skip"
+    ))
+
+    fig_sim.update_layout(
+        height=380, plot_bgcolor="white", paper_bgcolor="white",
+        xaxis_title="Date", yaxis_title="Daily Units Demanded",
+        legend=dict(orientation="h", y=1.12, x=0)
+    )
+    st.plotly_chart(fig_sim, use_container_width=True)
+
+    st.markdown("---")
+
+    # Daily Financial & Volume Impact Visualizations
+    col_fin1, col_fin2 = st.columns(2)
+
+    with col_fin1:
+        st.markdown("#### 💵 Daily Revenue Comparison (Base vs Promo)")
+        fig_rev_cmp = go.Figure()
+        fig_rev_cmp.add_trace(go.Bar(
+            x=df_sim_traj["date"], y=df_sim_traj["base_revenue"],
+            name="Baseline Revenue ($)", marker_color="#0f3460"
+        ))
+        fig_rev_cmp.add_trace(go.Bar(
+            x=df_sim_traj["date"], y=df_sim_traj["simulated_revenue"],
+            name="Simulated Revenue ($)", marker_color="#e94560" if price_drop < 0 else "#27ae60"
+        ))
+        fig_rev_cmp.update_layout(
+            barmode="group", height=320, plot_bgcolor="white",
+            legend=dict(orientation="h", y=1.15), yaxis_title="Revenue ($)"
+        )
+        st.plotly_chart(fig_rev_cmp, use_container_width=True)
+
+    with col_fin2:
+        st.markdown("#### 📦 Cumulative Unit Volume Lift")
+        df_sim_traj["cum_lift"] = df_sim_traj["unit_lift"].cumsum()
+        fig_cum_lift = go.Figure()
+        fig_cum_lift.add_trace(go.Scatter(
+            x=df_sim_traj["date"], y=df_sim_traj["cum_lift"],
+            mode="lines+markers", name="Cumulative Additional Units",
+            line=dict(color="#e94560", width=2.5),
+            fill="tozeroy", fillcolor="rgba(233, 69, 96, 0.1)"
+        ))
+        fig_cum_lift.update_layout(
+            height=320, plot_bgcolor="white",
+            xaxis_title="Date", yaxis_title="Net Cumulative Units",
+            legend=dict(orientation="h", y=1.15)
+        )
+        st.plotly_chart(fig_cum_lift, use_container_width=True)
+
+    st.markdown("---")
+
+    # Category Price Elasticity Sensitivity Matrix
+    st.markdown("### 🗂️ Category Elasticity Sensitivity Breakdown")
+    st.dataframe(df_cat_matrix, use_container_width=True)
+
+    # Supply Chain Warning Callout
+    if price_drop < 0:
+        st.warning(f"""
+        ⚠️ **Supply Chain Stockout Prevention Notice:**  
+        A **{abs(price_drop):.1f}% price reduction** produces a projected **+{summary['pct_unit_lift']:.1f}% surge** in consumer demand (+{summary['unit_lift_total']:,} units over 30 days).  
+        To prevent stockouts and service level degradation, procurement must place an **immediate replenishment buffer of at least {summary['extra_buffer_units_needed']:,} additional units** across suppliers before promotional launch.
+        """)
+    else:
+        st.info(f"""
+        ℹ️ **Inventory Optimization Notice:**  
+        A **+{price_drop:.1f}% price increase** results in a projected **{summary['pct_unit_lift']:.1f}% reduction** in demand velocity.  
+        Supplier reorder cycles should be adjusted downward to avoid excess inventory accumulation.
+        """)
