@@ -92,7 +92,7 @@ def simulate_price_scenario(base_forecast_df: pd.DataFrame,
         base_units = row["lightgbm_forecast"]
         # Add slight natural day-of-week promo elasticity boost on weekends
         d_obj = pd.to_datetime(row["date"])
-        dow_promo_factor = 1.08 if d_obj.dayofweek in [5, 6] else 1.0
+        dow_promo_factor = 1.08 if d_obj.day_of_week in [5, 6] else 1.0
         
         sim_units = max(0, int(round(base_units * (1.0 + (pct_demand_lift * dow_promo_factor)))))
         

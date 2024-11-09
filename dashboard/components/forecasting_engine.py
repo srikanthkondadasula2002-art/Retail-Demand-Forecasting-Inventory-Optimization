@@ -80,7 +80,7 @@ def load_forecast_series(store_id="CA_1", horizon_days=30):
     rows = []
     
     for i, d in enumerate(dates):
-        dow_factor = 1.35 if d.dayofweek in [5, 6] else 1.0
+        dow_factor = 1.35 if d.day_of_week in [5, 6] else 1.0
         trend_factor = 1.0 + (i * 0.003)
         actual = int(base * dow_factor * trend_factor * np.random.uniform(0.92, 1.08))
         
