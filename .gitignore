@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ipynb_checkpoints/
+*.env
+.venv/
+venv/
+ENV/
+
+# Data files (M5 dataset files exceed GitHub's 100MB limit)
+data/*.csv
+data/*.zip
+data/*.parquet
+data/*.feather
+!data/.gitkeep
+
+# Operating System
+.DS_Store
+Thumbs.db
