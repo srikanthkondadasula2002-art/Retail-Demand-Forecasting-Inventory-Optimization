@@ -14,9 +14,11 @@ This repository contains an end-to-end retail forecasting and supply chain optim
   - Download and verify M5 dataset integrity.
   - Profile schemas, sparsity (intermittent demand), product hierarchies, and store distributions.
   - Establish Git version control and data download automation.
-- [ ] **Day 2: Exploratory Data Analysis (EDA) & Demand Profiling**
-  - Category, store, and department sales trends.
-  - Weekend surges, holiday shocks, and SNAP program analysis.
+- [x] **Day 2: Exploratory Data Analysis (EDA) & Demand Profiling**
+  - Analyzed product velocity, department contributions, and intermittent demand (68.2% zero-ratio).
+  - Profiled store volume rankings, 2.72x performance spread, and 2011–2016 trajectories.
+  - Quantified intra-week weekend spikes (+38%) and state-specific SNAP stimulus lifts (+21.8% in WI).
+  - Delivered modular pipeline `src/eda_analysis.py`, figures in `reports/figures/`, and interactive notebook `notebooks/01_exploratory_data_analysis.ipynb`.
 - [ ] **Day 3: Memory Optimization & Data Pipeline (Wide-to-Long Melt)**
   - Downcasting data types (`int16`, `float16`, categoricals).
   - Merging `calendar.csv` and `sell_prices.csv`.
@@ -95,6 +97,26 @@ python inspect_m5.py
 # Hierarchical aggregation, day-of-week, and pricing analysis
 python inspect_aggregations.py
 ```
+
+### 4. Run Full Exploratory Data Analysis (EDA) Pipeline
+```bash
+# Generates store/product figures in reports/figures/ and metrics in reports/
+python src/eda_analysis.py
+
+# Or explore interactively via Jupyter:
+# notebooks/01_exploratory_data_analysis.ipynb
+```
+
+---
+
+## 📈 Key EDA Findings & Visualizations
+- **Store-Wise Trajectory**: Store `CA_3` is the top-performing location (\$32.1M revenue, 17.0% volume share), whereas `WI_2` underwent the most significant secular growth from 2011 to 2016.
+- **Product-Wise Concentration**: `FOODS` drives 68.6% of volume (`FOODS_3` alone represents 49.3% of the total catalog).
+- **Intermittent Demand**: 68.2% of all daily item observations are zeros (`HOBBIES_2` reaches 88.5% zero-ratio), demanding Tweedie or Croston's loss formulations.
+- **Intra-Week Seasonality**: Saturday and Sunday demand surges by **+38%** over midweek baselines.
+- **SNAP Benefit Stimulus**: Generates a **+21.8% demand lift** in Wisconsin, +11.5% in Texas, and +8.0% in California.
+
+*All generated figures are saved in [`reports/figures/`](reports/figures/) and documented in the interactive notebook [`notebooks/01_exploratory_data_analysis.ipynb`](notebooks/01_exploratory_data_analysis.ipynb).*
 
 ---
 

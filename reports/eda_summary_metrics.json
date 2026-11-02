@@ -1,0 +1,173 @@
+{
+  "total_time_series": 30490,
+  "total_units_sold": 65695409,
+  "category_metrics": [
+    {
+      "category": "FOODS",
+      "items": 1437,
+      "total_series": 14370,
+      "total_volume": 45089939,
+      "sparsity_pct": 62.02,
+      "mean_daily_sales_per_series": 1.64,
+      "p95_daily_sales": 7.0
+    },
+    {
+      "category": "HOBBIES",
+      "items": 565,
+      "total_series": 5650,
+      "total_volume": 6124800,
+      "sparsity_pct": 77.28,
+      "mean_daily_sales_per_series": 0.567,
+      "p95_daily_sales": 3.0
+    },
+    {
+      "category": "HOUSEHOLD",
+      "items": 1047,
+      "total_series": 10470,
+      "total_volume": 14480670,
+      "sparsity_pct": 71.77,
+      "mean_daily_sales_per_series": 0.723,
+      "p95_daily_sales": 4.0
+    }
+  ],
+  "department_metrics": [
+    {
+      "category": "FOODS",
+      "department": "FOODS_1",
+      "items": 216,
+      "total_volume": 5088041,
+      "sparsity_pct": 63.2
+    },
+    {
+      "category": "FOODS",
+      "department": "FOODS_2",
+      "items": 398,
+      "total_volume": 7629822,
+      "sparsity_pct": 68.07
+    },
+    {
+      "category": "FOODS",
+      "department": "FOODS_3",
+      "items": 823,
+      "total_volume": 32372076,
+      "sparsity_pct": 58.79
+    },
+    {
+      "category": "HOBBIES",
+      "department": "HOBBIES_1",
+      "items": 416,
+      "total_volume": 5596460,
+      "sparsity_pct": 73.27
+    },
+    {
+      "category": "HOBBIES",
+      "department": "HOBBIES_2",
+      "items": 149,
+      "total_volume": 528340,
+      "sparsity_pct": 88.48
+    },
+    {
+      "category": "HOUSEHOLD",
+      "department": "HOUSEHOLD_1",
+      "items": 532,
+      "total_volume": 11500526,
+      "sparsity_pct": 63.11
+    },
+    {
+      "category": "HOUSEHOLD",
+      "department": "HOUSEHOLD_2",
+      "items": 515,
+      "total_volume": 2980144,
+      "sparsity_pct": 80.72
+    }
+  ],
+  "store_metrics": [
+    {
+      "store_id": "CA_3",
+      "state_id": "CA",
+      "total_volume": 11188180,
+      "est_revenue": 32064177.92,
+      "mean_daily_store_volume": 5848.5
+    },
+    {
+      "store_id": "CA_1",
+      "state_id": "CA",
+      "total_volume": 7698216,
+      "est_revenue": 22629878.32,
+      "mean_daily_store_volume": 4024.2
+    },
+    {
+      "store_id": "TX_2",
+      "state_id": "TX",
+      "total_volume": 7214384,
+      "est_revenue": 20623217.85,
+      "mean_daily_store_volume": 3771.2
+    },
+    {
+      "store_id": "WI_2",
+      "state_id": "WI",
+      "total_volume": 6544012,
+      "est_revenue": 17766326.8,
+      "mean_daily_store_volume": 3420.8
+    },
+    {
+      "store_id": "WI_3",
+      "state_id": "WI",
+      "total_volume": 6427782,
+      "est_revenue": 17040470.61,
+      "mean_daily_store_volume": 3360.1
+    },
+    {
+      "store_id": "TX_3",
+      "state_id": "TX",
+      "total_volume": 6089330,
+      "est_revenue": 17894003.09,
+      "mean_daily_store_volume": 3183.1
+    },
+    {
+      "store_id": "CA_2",
+      "state_id": "CA",
+      "total_volume": 5685475,
+      "est_revenue": 17480458.16,
+      "mean_daily_store_volume": 2972.0
+    },
+    {
+      "store_id": "TX_1",
+      "state_id": "TX",
+      "total_volume": 5595292,
+      "est_revenue": 15818980.49,
+      "mean_daily_store_volume": 2924.9
+    },
+    {
+      "store_id": "WI_1",
+      "state_id": "WI",
+      "total_volume": 5149062,
+      "est_revenue": 14823687.4,
+      "mean_daily_store_volume": 2691.6
+    },
+    {
+      "store_id": "CA_4",
+      "state_id": "CA",
+      "total_volume": 4103676,
+      "est_revenue": 12259092.9,
+      "mean_daily_store_volume": 2145.2
+    }
+  ],
+  "snap_impact": {
+    "CA": {
+      "snap_days_mean": 15771.9,
+      "non_snap_days_mean": 14605.8,
+      "lift_pct": 7.98
+    },
+    "TX": {
+      "snap_days_mean": 10612.7,
+      "non_snap_days_mean": 9519.1,
+      "lift_pct": 11.49
+    },
+    "WI": {
+      "snap_days_mean": 10763.6,
+      "non_snap_days_mean": 8838.5,
+      "lift_pct": 21.78
+    }
+  }
+}
