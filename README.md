@@ -46,9 +46,10 @@ This repository contains an end-to-end retail forecasting and supply chain optim
 - [ ] **Day 11: Inventory Simulation & Stockout Prevention**
   - Backtesting inventory replenishment policies over 28-day evaluation horizon.
   - Quantifying holding costs vs. stockout penalty trade-offs.
-- [ ] **Day 12: Interactive Dashboard Development (Streamlit)**
-  - Interactive store/item demand forecaster.
-  - Inventory health, stockout risk alerts, and reorder recommendations.
+- [x] **Day 12: Interactive Dashboard Development (Streamlit)**
+  - Implemented real-time interactive sales analytics dashboard in `app.py`.
+  - Built polished Sales KPI cards (Units, Gross Revenue, Velocity, Catalog Count, Weekend Surge).
+  - Implemented dynamic sales trend charts with 7D/30D smoothing, store benchmarking, category mix, and intra-week rhythm.
 - [ ] **Day 13: Model Evaluation, Error Analysis & Hyperparameter Tuning**
   - Deep-dive into underperforming departments and intermittent items.
 - [ ] **Day 14: Documentation, Testing & Final Deployment**
@@ -106,6 +107,26 @@ python src/eda_analysis.py
 # Or explore interactively via Jupyter:
 # notebooks/01_exploratory_data_analysis.ipynb
 ```
+
+### 5. Launch the Interactive Sales Analytics Dashboard
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the Streamlit application
+streamlit run app.py
+```
+
+---
+
+## 🖥️ Sales Analytics Dashboard Features
+The interactive dashboard in [`app.py`](app.py) provides sub-second analytics powered by precomputed Parquet telemetry:
+- **Executive Sales KPI Cards**: Real-time cards displaying *Total Units Sold*, *Estimated Gross Revenue ($)*, *Daily Velocity*, *Active Catalog SKU Count*, and *Weekend Surge Lift (+%)*.
+- **Interactive Multi-Granularity Trends**: Toggleable smoothing between *Raw Daily Actuals*, *7-Day Moving Average*, and *30-Day Moving Average* with hover inspection.
+- **Store Performance Benchmarks**: Multi-line longitudinal trajectory comparison across all 10 Walmart stores with state-level volume rankings.
+- **Category & Department Area Composition**: Longitudinal demand composition highlighting grocery vs. general merchandise velocity.
+- **Intra-Week & Macro Drivers**: Monday–Sunday demand curves and SNAP benefit vs. non-SNAP sales lift charts for CA, TX, and WI.
+- **Product Leaderboard**: Top products ranked by volume and revenue with dynamic filtering and CSV export.
 
 ---
 
