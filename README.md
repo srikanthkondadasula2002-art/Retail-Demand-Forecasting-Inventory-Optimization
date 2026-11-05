@@ -22,9 +22,10 @@ This repository contains an end-to-end retail forecasting and supply chain optim
 - [ ] **Day 3: Memory Optimization & Data Pipeline (Wide-to-Long Melt)**
   - Downcasting data types (`int16`, `float16`, categoricals).
   - Merging `calendar.csv` and `sell_prices.csv`.
-- [ ] **Day 4: Feature Engineering I (Lags & Rolling Aggregations)**
-  - Autoregressive lags ($\ge 28$ days to prevent data leakage).
-  - Rolling means, standard deviations, and zero-demand ratios.
+- [x] **Day 4: BigQuery Enterprise Data Warehouse Integration**
+  - Configured BigQuery connection manager and client authentication in `src/bigquery_config.py`.
+  - Designed partitioned and clustered relational DDL schemas in `sql/schema/` (`dim_calendar`, `dim_product`, `dim_store`, `fct_daily_sales`, `fct_product_performance`, and analytical view `v_sales_kpi_summary`).
+  - Implemented automated BigQuery loader pipeline in `src/bigquery_loader.py` (validated 169,428 records with dry-run and live GCP upload support).
 - [ ] **Day 5: Feature Engineering II (Calendar, Events, SNAP & Pricing)**
   - Day-of-week, month, weekend indicators, Christmas closures.
   - Price momentum, discount depth, and SNAP-food interactions.
@@ -116,6 +117,26 @@ pip install -r requirements.txt
 # Start the Streamlit application
 streamlit run app.py
 ```
+
+### 6. BigQuery Data Warehouse Integration
+```bash
+# Validate schemas, constraints, and partitioning in dry-run mode
+python src/bigquery_loader.py --dry-run
+
+# Load processed telemetry to live Google Cloud BigQuery
+python src/bigquery_loader.py --project your-gcp-project-id --dataset retail_demand_dwh
+```
+
+---
+
+## 🏛️ BigQuery Data Warehouse Architecture
+The enterprise analytics layer in BigQuery is designed using a Kimball star-schema:
+- **`dim_calendar`**: 1,969 records partitioned by `date` (DAY) with fiscal calendar, holiday types, and SNAP indicators.
+- **`dim_product`**: 3,049 items clustered by `cat_id` and `dept_id`.
+- **`dim_store`**: 10 retail stores clustered by `state_id`.
+- **`fct_daily_sales`**: 133,910 rows partitioned by `date` (DAY) and clustered by `store_id`, `cat_id`, and `dept_id` for performant filtered slice-and-dice queries.
+- **`fct_product_performance`**: 30,490 store-item records with velocity metrics, intermittency zero ratios, and gross revenue.
+- **`v_sales_kpi_summary`**: Materialized analytical view aggregating monthly, weekly, and weekend sales throughput.
 
 ---
 
