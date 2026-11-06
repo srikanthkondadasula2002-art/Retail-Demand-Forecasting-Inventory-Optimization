@@ -35,9 +35,11 @@ This repository contains an end-to-end retail forecasting and supply chain optim
 - [ ] **Day 7: Gradient Boosting with LightGBM & CatBoost**
   - Tweedie deviance objective function to address 68% zero inflation.
   - Group time-series cross-validation.
-- [ ] **Day 8: Prophet & Hierarchical Forecasting**
-  - Department and store-level trend & seasonality decomposition.
-  - Bottom-up vs. top-down hierarchical reconciliation.
+- [x] **Day 8: Facebook Prophet Hierarchical Forecasting**
+  - Implemented tuned Prophet models with multiplicative seasonality, holiday effects, and state SNAP regressors in `src/prophet_model.py`.
+  - Generated 28-day out-of-sample forecast horizon (`d_1914` to `d_1941`) and evaluated against true transactional actuals.
+  - Achieved an overall **7.79% WAPE** across all 10 stores (flagship store `CA_3` achieved **4.06% WAPE**).
+  - Exported predictions to `data/predictions/prophet_forecast_28d.csv` and telemetry to `reports/prophet_evaluation_metrics.json`.
 - [ ] **Day 9: SQL & BigQuery / dbt Transformation Layer**
   - Modeling feature tables and aggregated metrics in BigQuery.
   - dbt models for automated daily forecast tracking.
@@ -126,6 +128,25 @@ python src/bigquery_loader.py --dry-run
 # Load processed telemetry to live Google Cloud BigQuery
 python src/bigquery_loader.py --project your-gcp-project-id --dataset retail_demand_dwh
 ```
+
+### 7. Run Facebook Prophet Demand Forecasting Model
+```bash
+# Train multi-scale seasonal models with holiday and SNAP regressors
+# Evaluates 28-day blind predictions against ground-truth actuals
+python src/prophet_model.py
+```
+
+---
+
+## 🔮 Facebook Prophet Model Performance (28-Day Horizon)
+Tuned multi-scale Prophet models with holiday schedules, Christmas closure flags, and state SNAP regressors achieved an overall **7.79% WAPE** across all 10 Walmart locations:
+- **`CA_3` (Flagship Location)**: **4.06% WAPE** (MAE: 254.3 units/day, Total Forecast: 174,302 vs Actual: 175,091).
+- **`CA_2`**: **4.68% WAPE** (MAE: 222.2 units/day).
+- **`CA_1`**: **6.38% WAPE** (MAE: 305.4 units/day).
+- **`TX_2`**: **6.49% WAPE** (MAE: 267.0 units/day).
+- **Network Overall**: **7.79% WAPE** (1.15M total forecast vs 1.23M actual units).
+
+*Predictions saved to [`data/predictions/prophet_forecast_28d.csv`](data/predictions/prophet_forecast_28d.csv) and visualized in [`reports/figures/figure7_prophet_forecast_actuals.png`](reports/figures/figure7_prophet_forecast_actuals.png).*
 
 ---
 
