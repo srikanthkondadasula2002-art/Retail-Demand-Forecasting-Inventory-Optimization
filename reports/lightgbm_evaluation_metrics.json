@@ -1,0 +1,79 @@
+{
+  "CA_1": {
+    "mae": 255.28,
+    "rmse": 339.37,
+    "wape_pct": 5.33,
+    "total_actual": 134032,
+    "total_forecast": 128708
+  },
+  "CA_2": {
+    "mae": 437.82,
+    "rmse": 592.78,
+    "wape_pct": 9.22,
+    "total_actual": 132920,
+    "total_forecast": 123007
+  },
+  "CA_3": {
+    "mae": 311.09,
+    "rmse": 398.76,
+    "wape_pct": 4.97,
+    "total_actual": 175360,
+    "total_forecast": 181281
+  },
+  "CA_4": {
+    "mae": 205.14,
+    "rmse": 244.87,
+    "wape_pct": 7.28,
+    "total_actual": 78858,
+    "total_forecast": 74261
+  },
+  "TX_1": {
+    "mae": 242.88,
+    "rmse": 331.34,
+    "wape_pct": 6.97,
+    "total_actual": 97531,
+    "total_forecast": 93743
+  },
+  "TX_2": {
+    "mae": 233.84,
+    "rmse": 318.32,
+    "wape_pct": 5.68,
+    "total_actual": 115258,
+    "total_forecast": 113720
+  },
+  "TX_3": {
+    "mae": 345.65,
+    "rmse": 405.58,
+    "wape_pct": 8.3,
+    "total_actual": 116610,
+    "total_forecast": 108342
+  },
+  "WI_1": {
+    "mae": 299.71,
+    "rmse": 357.24,
+    "wape_pct": 7.46,
+    "total_actual": 112444,
+    "total_forecast": 105613
+  },
+  "WI_2": {
+    "mae": 401.4,
+    "rmse": 530.13,
+    "wape_pct": 7.3,
+    "total_actual": 153976,
+    "total_forecast": 150351
+  },
+  "WI_3": {
+    "mae": 256.65,
+    "rmse": 348.4,
+    "wape_pct": 6.26,
+    "total_actual": 114775,
+    "total_forecast": 109469
+  },
+  "OVERALL_ALL_STORES": {
+    "mae": 298.94,
+    "rmse": 398.9,
+    "wape_pct": 6.8,
+    "total_actual": 1231764,
+    "total_forecast": 1188500
+  }
+}

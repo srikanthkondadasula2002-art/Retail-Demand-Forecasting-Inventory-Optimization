@@ -29,12 +29,11 @@ This repository contains an end-to-end retail forecasting and supply chain optim
 - [ ] **Day 5: Feature Engineering II (Calendar, Events, SNAP & Pricing)**
   - Day-of-week, month, weekend indicators, Christmas closures.
   - Price momentum, discount depth, and SNAP-food interactions.
-- [ ] **Day 6: Baseline Forecasting Models**
-  - Naive, Moving Average, and Exponential Smoothing baselines.
-  - Evaluate using RMSE, WAPE, and WRMSSE.
-- [ ] **Day 7: Gradient Boosting with LightGBM & CatBoost**
-  - Tweedie deviance objective function to address 68% zero inflation.
-  - Group time-series cross-validation.
+- [x] **Day 6: Gradient Boosted Decision Trees (LightGBM)**
+  - Formulated Tweedie deviance loss ($p=1.15$) to handle 68.2% zero-inflation and overdispersed retail demand.
+  - Engineered anti-leakage autoregressive lags ($\ge 28\text{D}$), rolling velocity/volatility features, and SNAP interaction regressors in `src/lightgbm_model.py`.
+  - Generated 28-day out-of-sample predictions achieving an overall **6.80% WAPE** across all 10 stores (outperforming Prophet in 8 of 10 stores).
+  - Exported predictions to `data/predictions/lightgbm_forecast_28d.csv` and telemetry to `reports/lightgbm_evaluation_metrics.json`.
 - [x] **Day 8: Facebook Prophet Hierarchical Forecasting**
   - Implemented tuned Prophet models with multiplicative seasonality, holiday effects, and state SNAP regressors in `src/prophet_model.py`.
   - Generated 28-day out-of-sample forecast horizon (`d_1914` to `d_1941`) and evaluated against true transactional actuals.
@@ -135,6 +134,32 @@ python src/bigquery_loader.py --project your-gcp-project-id --dataset retail_dem
 # Evaluates 28-day blind predictions against ground-truth actuals
 python src/prophet_model.py
 ```
+
+### 8. Run LightGBM Tweedie Demand Forecasting Model
+```bash
+# Train GBDT with anti-leakage lags (>= 28D), rolling velocity, and Tweedie deviance (p=1.15)
+python src/lightgbm_model.py
+```
+
+---
+
+## ⚡ Model Performance Benchmark (28-Day Blind Horizon)
+
+| Store ID | State | Prophet WAPE (%) | LightGBM WAPE (%) | Performance Delta | Champion Model |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`CA_1`** | CA | 6.38% | **5.33%** | -1.05% | 🏆 **LightGBM** |
+| **`CA_2`** | CA | **4.68%** | 9.22% | +4.54% | 🏆 **Prophet** |
+| **`CA_3`** | CA | **4.06%** | 4.97% | +0.91% | 🏆 **Prophet** |
+| **`CA_4`** | CA | 8.41% | **7.28%** | -1.13% | 🏆 **LightGBM** |
+| **`TX_1`** | TX | 8.63% | **6.97%** | -1.66% | 🏆 **LightGBM** |
+| **`TX_2`** | TX | 6.49% | **5.68%** | -0.81% | 🏆 **LightGBM** |
+| **`TX_3`** | TX | 8.84% | **8.30%** | -0.54% | 🏆 **LightGBM** |
+| **`WI_1`** | WI | 8.43% | **7.46%** | -0.97% | 🏆 **LightGBM** |
+| **`WI_2`** | WI | 13.48% | **7.30%** | **-6.18%** | 🏆 **LightGBM** |
+| **`WI_3`** | WI | 9.55% | **6.26%** | -3.29% | 🏆 **LightGBM** |
+| **OVERALL** | **ALL** | **7.79%** | **6.80%** | **-0.99%** | 🏆 **LightGBM (Overall Champion)** |
+
+*Predictions: [`data/predictions/lightgbm_forecast_28d.csv`](data/predictions/lightgbm_forecast_28d.csv) | Telemetry: [`reports/lightgbm_evaluation_metrics.json`](reports/lightgbm_evaluation_metrics.json)*
 
 ---
 
