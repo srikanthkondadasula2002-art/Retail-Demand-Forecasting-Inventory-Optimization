@@ -1,0 +1,92 @@
+{
+  "timestamp": "2026-11-09T14:37:41.376842",
+  "platform": {
+    "system": "Windows",
+    "release": "11",
+    "python_version": "3.14.2",
+    "machine": "AMD64"
+  },
+  "directories": {
+    "data": "EXISTS",
+    "data\\processed": "EXISTS",
+    "data\\predictions": "EXISTS",
+    "reports": "EXISTS",
+    "reports\\figures": "EXISTS",
+    "sql": "EXISTS",
+    "sql\\queries": "EXISTS",
+    "sql\\schema": "EXISTS",
+    "notebooks": "EXISTS"
+  },
+  "packages": {
+    "pandas": {
+      "status": "INSTALLED",
+      "version": "3.0.5"
+    },
+    "numpy": {
+      "status": "INSTALLED",
+      "version": "2.5.1"
+    },
+    "scipy": {
+      "status": "INSTALLED",
+      "version": "1.18.0"
+    },
+    "matplotlib": {
+      "status": "INSTALLED",
+      "version": "3.11.1"
+    },
+    "seaborn": {
+      "status": "INSTALLED",
+      "version": "0.13.2"
+    },
+    "pyarrow": {
+      "status": "INSTALLED",
+      "version": "26.0.1"
+    },
+    "streamlit": {
+      "status": "INSTALLED",
+      "version": "1.66.1"
+    },
+    "lightgbm": {
+      "status": "INSTALLED",
+      "version": "4.7.0"
+    },
+    "prophet": {
+      "status": "INSTALLED",
+      "version": "1.5.0"
+    }
+  },
+  "datasets": {
+    "calendar": {
+      "exists": true,
+      "path": "data\\calendar.csv",
+      "size_mb": 0.1,
+      "status": "VALID"
+    },
+    "sales_train_validation": {
+      "exists": true,
+      "path": "data\\sales_train_validation.csv",
+      "size_mb": 114.45,
+      "status": "VALID"
+    },
+    "sales_train_evaluation": {
+      "exists": true,
+      "path": "data\\sales_train_evaluation.csv",
+      "size_mb": 116.1,
+      "status": "VALID"
+    },
+    "sell_prices": {
+      "exists": true,
+      "path": "data\\sell_prices.csv",
+      "size_mb": 193.97,
+      "status": "VALID"
+    },
+    "sample_submission": {
+      "exists": true,
+      "path": "data\\sample_submission.csv",
+      "size_mb": 4.99,
+      "status": "VALID"
+    }
+  },
+  "total_data_size_mb": 429.61,
+  "setup_complete": true
+}
