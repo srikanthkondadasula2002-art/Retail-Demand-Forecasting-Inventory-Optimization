@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-11-09T14:46:37.490741",
+  "forecast_horizon_days": 28,
+  "anti_leakage_policy": {
+    "minimum_lag_shift_days": 28,
+    "rolling_window_shift_days": 28,
+    "status": "VERIFIED_NO_FUTURE_LEAKAGE"
+  },
+  "split_definitions": {
+    "training_window": "d_1 to d_1885",
+    "validation_window": "d_1886 to d_1913 (28 days)",
+    "test_evaluation_window": "d_1914 to d_1941 (28 days)"
+  },
+  "sample_series_count": 500,
+  "total_test_rows": 14000,
+  "feature_columns": [
+    "lag_28",
+    "lag_35",
+    "lag_42",
+    "lag_49",
+    "lag_56",
+    "roll_mean_7",
+    "roll_mean_28",
+    "roll_std_28",
+    "roll_zero_ratio_28",
+    "sin_wday",
+    "cos_wday",
+    "sin_month",
+    "cos_month",
+    "is_weekend",
+    "has_event",
+    "is_christmas",
+    "snap_active",
+    "sell_price",
+    "price_ratio_28d"
+  ],
+  "feature_categories": {
+    "lag_features": [
+      "lag_28",
+      "lag_35",
+      "lag_42",
+      "lag_49",
+      "lag_56"
+    ],
+    "rolling_window_features": [
+      "roll_mean_7",
+      "roll_mean_28",
+      "roll_std_28",
+      "roll_zero_ratio_28"
+    ],
+    "calendar_cyclical_features": [
+      "sin_wday",
+      "cos_wday",
+      "sin_month",
+      "cos_month",
+      "is_weekend"
+    ],
+    "event_policy_features": [
+      "has_event",
+      "is_christmas",
+      "snap_active"
+    ],
+    "pricing_features": [
+      "sell_price",
+      "price_ratio_28d"
+    ]
+  }
+}
