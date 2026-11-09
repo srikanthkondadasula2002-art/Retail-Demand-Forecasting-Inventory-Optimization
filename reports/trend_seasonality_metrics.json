@@ -1,0 +1,155 @@
+{
+  "timestamp": "2026-11-09T14:43:55.269357",
+  "time_horizon": {
+    "start_date": "2011-01-29",
+    "end_date": "2016-04-24",
+    "total_days": 1913
+  },
+  "trend_dynamics": {
+    "trend_initial_daily_units": 27134.6,
+    "trend_final_daily_units": 40754.1,
+    "approx_annualized_growth_pct": 8.1,
+    "trend_strength_index": 0.774
+  },
+  "seasonality_dynamics": {
+    "weekly_seasonal_period": 7,
+    "seasonal_strength_index": 0.7539,
+    "acf_harmonic_peaks": {
+      "lag_7": 0.8082,
+      "lag_14": 0.7364,
+      "lag_21": 0.7498,
+      "lag_28": 0.8164,
+      "lag_35": 0.7677,
+      "lag_56": 0.723
+    },
+    "pacf_key_lags": {
+      "lag_1": 0.6738,
+      "lag_7": 0.4332,
+      "lag_14": 0.1855
+    }
+  },
+  "top_positive_holiday_shocks": [
+    {
+      "event_name": "LaborDay",
+      "event_type": "National",
+      "occurrences": 5,
+      "avg_units": 42154.6,
+      "baseline_units": 34489.2,
+      "lift_pct": 22.23
+    },
+    {
+      "event_name": "SuperBowl",
+      "event_type": "Sporting",
+      "occurrences": 6,
+      "avg_units": 40924.0,
+      "baseline_units": 34489.2,
+      "lift_pct": 18.66
+    },
+    {
+      "event_name": "Easter",
+      "event_type": "Cultural",
+      "occurrences": 5,
+      "avg_units": 39517.6,
+      "baseline_units": 34489.2,
+      "lift_pct": 14.58
+    },
+    {
+      "event_name": "OrthodoxEaster",
+      "event_type": "Religious",
+      "occurrences": 4,
+      "avg_units": 38277.0,
+      "baseline_units": 34489.2,
+      "lift_pct": 10.98
+    },
+    {
+      "event_name": "Father's day",
+      "event_type": "Cultural",
+      "occurrences": 4,
+      "avg_units": 36562.0,
+      "baseline_units": 34489.2,
+      "lift_pct": 6.01
+    },
+    {
+      "event_name": "Purim End",
+      "event_type": "Religious",
+      "occurrences": 6,
+      "avg_units": 35957.0,
+      "baseline_units": 34489.2,
+      "lift_pct": 4.26
+    },
+    {
+      "event_name": "Eid al-Fitr",
+      "event_type": "Religious",
+      "occurrences": 5,
+      "avg_units": 35267.6,
+      "baseline_units": 34489.2,
+      "lift_pct": 2.26
+    },
+    {
+      "event_name": "ColumbusDay",
+      "event_type": "National",
+      "occurrences": 5,
+      "avg_units": 35164.8,
+      "baseline_units": 34489.2,
+      "lift_pct": 1.96
+    },
+    {
+      "event_name": "VeteransDay",
+      "event_type": "National",
+      "occurrences": 5,
+      "avg_units": 35118.8,
+      "baseline_units": 34489.2,
+      "lift_pct": 1.83
+    },
+    {
+      "event_name": "Ramadan starts",
+      "event_type": "Religious",
+      "occurrences": 5,
+      "avg_units": 34779.6,
+      "baseline_units": 34489.2,
+      "lift_pct": 0.84
+    }
+  ],
+  "top_negative_holiday_shocks": [
+    {
+      "event_name": "Halloween",
+      "event_type": "Cultural",
+      "occurrences": 5,
+      "avg_units": 30059.4,
+      "baseline_units": 34489.2,
+      "lift_pct": -12.84
+    },
+    {
+      "event_name": "LentWeek2",
+      "event_type": "Religious",
+      "occurrences": 6,
+      "avg_units": 29747.0,
+      "baseline_units": 34489.2,
+      "lift_pct": -13.75
+    },
+    {
+      "event_name": "NewYear",
+      "event_type": "National",
+      "occurrences": 5,
+      "avg_units": 25768.4,
+      "baseline_units": 34489.2,
+      "lift_pct": -25.29
+    },
+    {
+      "event_name": "Thanksgiving",
+      "event_type": "National",
+      "occurrences": 5,
+      "avg_units": 21130.0,
+      "baseline_units": 34489.2,
+      "lift_pct": -38.73
+    },
+    {
+      "event_name": "Christmas",
+      "event_type": "National",
+      "occurrences": 5,
+      "avg_units": 15.6,
+      "baseline_units": 34489.2,
+      "lift_pct": -99.95
+    }
+  ]
+}
