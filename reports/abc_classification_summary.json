@@ -1,0 +1,137 @@
+{
+  "timestamp": "2026-11-09T14:41:47.599850",
+  "total_series": 30490,
+  "total_revenue": 188400293.52,
+  "total_units": 65695409,
+  "abc_classification": {
+    "Class A": {
+      "sku_count": 11163,
+      "sku_percentage": 36.61,
+      "revenue_sum": 150717398.33,
+      "revenue_percentage": 80.0,
+      "units_sum": 50873213,
+      "units_percentage": 77.44,
+      "avg_unit_price": 2.96
+    },
+    "Class B": {
+      "sku_count": 9404,
+      "sku_percentage": 30.84,
+      "revenue_sum": 28261128.97,
+      "revenue_percentage": 15.0,
+      "units_sum": 10988419,
+      "units_percentage": 16.73,
+      "avg_unit_price": 2.57
+    },
+    "Class C": {
+      "sku_count": 9923,
+      "sku_percentage": 32.55,
+      "revenue_sum": 9421766.22,
+      "revenue_percentage": 5.0,
+      "units_sum": 3833777,
+      "units_percentage": 5.84,
+      "avg_unit_price": 2.46
+    }
+  },
+  "velocity_clusters": {
+    "Fast": {
+      "series_count": 1560,
+      "series_percentage": 5.12,
+      "avg_zero_ratio": 0.1531,
+      "avg_daily_units": 6.9,
+      "avg_cv_demand": 0.86
+    },
+    "Medium": {
+      "series_count": 8199,
+      "series_percentage": 26.89,
+      "avg_zero_ratio": 0.4538,
+      "avg_daily_units": 2.01,
+      "avg_cv_demand": 1.33
+    },
+    "Slow": {
+      "series_count": 11997,
+      "series_percentage": 39.35,
+      "avg_zero_ratio": 0.7385,
+      "avg_daily_units": 0.5,
+      "avg_cv_demand": 2.09
+    },
+    "Lumpy / Intermittent": {
+      "series_count": 8734,
+      "series_percentage": 28.65,
+      "avg_zero_ratio": 0.9129,
+      "avg_daily_units": 0.12,
+      "avg_cv_demand": 3.66
+    }
+  },
+  "store_rankings": {
+    "CA_3": {
+      "state": "CA",
+      "revenue": 32064177.92,
+      "revenue_share_pct": 17.02,
+      "total_units": 11188180,
+      "average_sparsity_pct": 59.6
+    },
+    "CA_1": {
+      "state": "CA",
+      "revenue": 22629878.32,
+      "revenue_share_pct": 12.01,
+      "total_units": 7698216,
+      "average_sparsity_pct": 63.95
+    },
+    "TX_2": {
+      "state": "TX",
+      "revenue": 20623217.85,
+      "revenue_share_pct": 10.95,
+      "total_units": 7214384,
+      "average_sparsity_pct": 66.46
+    },
+    "TX_3": {
+      "state": "TX",
+      "revenue": 17894003.09,
+      "revenue_share_pct": 9.5,
+      "total_units": 6089330,
+      "average_sparsity_pct": 69.9
+    },
+    "WI_2": {
+      "state": "WI",
+      "revenue": 17766326.8,
+      "revenue_share_pct": 9.43,
+      "total_units": 6544012,
+      "average_sparsity_pct": 70.72
+    },
+    "CA_2": {
+      "state": "CA",
+      "revenue": 17480458.16,
+      "revenue_share_pct": 9.28,
+      "total_units": 5685475,
+      "average_sparsity_pct": 69.11
+    },
+    "WI_3": {
+      "state": "WI",
+      "revenue": 17040470.61,
+      "revenue_share_pct": 9.04,
+      "total_units": 6427782,
+      "average_sparsity_pct": 70.2
+    },
+    "TX_1": {
+      "state": "TX",
+      "revenue": 15818980.49,
+      "revenue_share_pct": 8.4,
+      "total_units": 5595292,
+      "average_sparsity_pct": 70.85
+    },
+    "WI_1": {
+      "state": "WI",
+      "revenue": 14823687.4,
+      "revenue_share_pct": 7.87,
+      "total_units": 5149062,
+      "average_sparsity_pct": 69.0
+    },
+    "CA_4": {
+      "state": "CA",
+      "revenue": 12259092.9,
+      "revenue_share_pct": 6.51,
+      "total_units": 4103676,
+      "average_sparsity_pct": 72.17
+    }
+  }
+}
