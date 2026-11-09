@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-11-09T14:39:40.318621",
+  "pipeline_status": "SUCCESS",
+  "calendar_cleaning": {
+    "total_days": 1969,
+    "min_date": "2011-01-29",
+    "max_date": "2016-06-19",
+    "is_continuous": true,
+    "missing_values_handled": {
+      "event_name_1": 1807,
+      "event_type_1": 1807,
+      "event_name_2": 1964,
+      "event_type_2": 1964
+    },
+    "raw_memory_mb": 0.26,
+    "clean_memory_mb": 0.07,
+    "memory_savings_pct": 72.25
+  },
+  "sales_cleaning": {
+    "total_series": 30490,
+    "historical_days": 1913,
+    "has_nulls": false,
+    "has_negatives": false,
+    "raw_memory_mb": 448.23,
+    "clean_memory_mb": 112.62,
+    "memory_savings_pct": 74.88,
+    "overall_zero_demand_ratio": 0.682,
+    "total_cumulative_units": 65695409
+  },
+  "prices_cleaning": {
+    "total_price_records": 6841121,
+    "null_prices_count": 0,
+    "min_price": 0.01,
+    "max_price": 107.32,
+    "median_price": 3.47,
+    "raw_memory_mb": 318.15,
+    "clean_memory_mb": 71.83,
+    "memory_savings_pct": 77.42
+  },
+  "memory_optimizations": {
+    "total_raw_memory_mb": 766.64,
+    "total_clean_memory_mb": 184.52,
+    "total_memory_saved_mb": 582.12,
+    "total_memory_reduction_pct": 75.93
+  }
+}
