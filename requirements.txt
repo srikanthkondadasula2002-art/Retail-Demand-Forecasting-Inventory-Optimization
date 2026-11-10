@@ -1,13 +1,29 @@
+# Core Data Science & Analytics
 pandas>=2.0.0
 numpy>=1.24.0
+scipy>=1.10.0
+pyarrow>=10.0.0
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+
+# Visualization & Dashboard
 matplotlib>=3.7.0
 seaborn>=0.12.0
-scipy>=1.10.0
 plotly>=5.15.0
 streamlit>=1.30.0
-pyarrow>=10.0.0
+
+# Data Warehousing & Database (BigQuery, dbt, SQL)
 google-cloud-bigquery>=3.20.0
+google-cloud-bigquery-storage>=2.25.0
 db-dtypes>=1.2.0
+dbt-bigquery>=1.7.0
+sqlalchemy>=2.0.0
+
+# Machine Learning & Time-Series Forecasting
 prophet>=1.1.5
 cmdstanpy>=1.0.4
 lightgbm>=4.0.0
+scikit-learn>=1.4.0
+
+# Testing & Quality Assurance
+pytest>=8.0.0
