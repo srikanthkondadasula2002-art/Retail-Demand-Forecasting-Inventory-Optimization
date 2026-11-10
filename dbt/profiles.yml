@@ -1,0 +1,31 @@
+# profiles.yml
+# Connection profiles for dbt with Google BigQuery and Snowflake / Local support
+
+retail_demand_profile:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth # or service-account
+      project: "{{ env_var('GCP_PROJECT_ID', 'retail-demand-forecasting-dwh') }}"
+      dataset: retail_demand_dwh
+      threads: 8
+      timeout_seconds: 300
+      location: US
+      priority: interactive
+
+    prod:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('GCP_KEYFILE_PATH', 'credentials/bigquery-sa-key.json') }}"
+      project: "{{ env_var('GCP_PROJECT_ID', 'retail-demand-forecasting-dwh') }}"
+      dataset: retail_demand_dwh_prod
+      threads: 16
+      timeout_seconds: 600
+      location: US
+      priority: batch
+
+    local_duckdb:
+      type: duckdb
+      path: 'data/retail_demand.duckdb'
+      threads: 4

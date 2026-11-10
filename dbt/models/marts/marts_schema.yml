@@ -1,0 +1,81 @@
+version: 2
+
+models:
+  - name: fct_daily_sales
+    description: "Daily partitioned and clustered transaction fact table uniting daily units with calendar, holiday, and SNAP signals."
+    columns:
+      - name: date
+        description: "Transaction date"
+        tests:
+          - not_null
+      - name: store_id
+        description: "Retail store identifier"
+        tests:
+          - not_null
+      - name: dept_id
+        description: "Department identifier"
+        tests:
+          - not_null
+      - name: sales_units
+        description: "Units sold"
+        tests:
+          - not_null
+
+  - name: agg_weekly_sales
+    description: "Weekly aggregated sales metrics with week-over-week (WoW) unit growth and 4-week moving averages."
+    columns:
+      - name: wm_yr_wk
+        description: "Walmart fiscal week"
+        tests:
+          - not_null
+      - name: weekly_units
+        description: "Total weekly units sold"
+        tests:
+          - not_null
+
+  - name: agg_monthly_sales
+    description: "Monthly rollups by state, store, and category with MoM growth rates."
+    columns:
+      - name: year
+        tests:
+          - not_null
+      - name: month
+        tests:
+          - not_null
+
+  - name: mart_inventory_replenishment
+    description: "Supply chain replenishment data mart computing Safety Stock, Lead Time Demand, Reorder Points (ROP), and Economic Order Quantities (EOQ)."
+    columns:
+      - name: store_id
+        tests:
+          - not_null
+      - name: dept_id
+        tests:
+          - not_null
+      - name: safety_stock_units
+        tests:
+          - not_null
+      - name: reorder_point_units
+        tests:
+          - not_null
+      - name: eoq_order_units
+        tests:
+          - not_null
+
+  - name: mart_forecast_evaluation
+    description: "Analytical mart comparing 28-day blind predictions from LightGBM Tweedie and Facebook Prophet against actuals."
+    columns:
+      - name: store_id
+        tests:
+          - not_null
+      - name: date
+        tests:
+          - not_null
+      - name: actual_units
+        tests:
+          - not_null
+      - name: winning_model
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['LightGBM', 'Prophet']

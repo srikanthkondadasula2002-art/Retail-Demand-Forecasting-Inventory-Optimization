@@ -276,11 +276,27 @@ Ran 8 tests in 4.73s | OK (Status: ALL_PASSED)
 │   ├── prophet_evaluation_metrics.json      # Prophet error metrics per store
 │   ├── figures/                             # 17 publication-grade figures
 │   └── sql_analytics/                       # Tabular SQL outputs & markdown summary
+├── dbt/
+│   ├── dbt_project.yml                      # dbt configuration and materializations
+│   ├── profiles.yml                         # Data warehouse profiles (BigQuery / DuckDB)
+│   ├── README.md                            # dbt transformation lineage guide
+│   └── models/
+│       ├── staging/                         # Staging views (calendar, sales, prices)
+│       └── marts/                           # Analytics marts (fct, weekly, monthly, inv, fc)
+├── dashboard/
+│   ├── app.py                               # Modular Streamlit dashboard
+│   ├── requirements.txt                     # Dashboard dependencies
+│   ├── README.md                            # Dashboard component documentation
+│   └── components/
+│       ├── forecasting_engine.py            # Forecasting series and benchmark metrics
+│       ├── inventory_engine.py              # Safety stock, ROP, Wilson EOQ
+│       └── scenario_engine.py               # Price elasticity simulation engine
 ├── sql/
 │   ├── schema/                              # BigQuery DDL schema definitions (01 to 09)
 │   └── queries/                             # 7 analytical SQL aggregation queries
 ├── tests/
-│   └── test_pipeline_integration.py         # 8-suite automated integration tests
+│   ├── test_pipeline_integration.py         # 9-suite automated integration tests
+│   └── test_dashboard.py                    # 38-suite component unit tests
 └── src/
     ├── config.py                            # Centralized paths and taxonomies
     ├── verify_setup.py                      # Environment and dataset validator

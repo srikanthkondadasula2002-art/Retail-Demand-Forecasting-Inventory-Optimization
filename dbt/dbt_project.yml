@@ -1,0 +1,39 @@
+# dbt_project.yml
+# dbt Configuration for Walmart M5 Retail Demand Forecasting & Inventory Optimization Data Warehouse
+
+name: 'retail_demand_dwh'
+version: '1.0.0'
+config-version: 2
+
+# Profile to connect to Data Warehouse (BigQuery / Snowflake / Local)
+profile: 'retail_demand_profile'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  retail_demand_dwh:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: analytics
+      fct_daily_sales:
+        +partition_by:
+          field: date
+          data_type: date
+          granularity: day
+        +cluster_by: ["store_id", "cat_id", "dept_id"]
+      mart_forecast_evaluation:
+        +materialized: view
+      mart_inventory_replenishment:
+        +materialized: table

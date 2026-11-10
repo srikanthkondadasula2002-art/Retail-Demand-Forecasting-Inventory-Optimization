@@ -186,6 +186,31 @@ class TestPipelineIntegration(unittest.TestCase):
             df = pd.read_parquet(p)
             self.assertGreater(len(df), 0, f"Dashboard dependency empty: {p.name}")
 
+    # -------------------------------------------------------------
+    # 8. dbt Transformation Layer Tests
+    # -------------------------------------------------------------
+    def test_09_dbt_transformation_layer(self):
+        """Validates that dbt project configuration, staging models, and marts exist."""
+        dbt_dir = PROJECT_ROOT / "dbt"
+        self.assertTrue((dbt_dir / "dbt_project.yml").exists(), "dbt_project.yml missing")
+        self.assertTrue((dbt_dir / "profiles.yml").exists(), "profiles.yml missing")
+
+        # Staging models
+        staging_dir = dbt_dir / "models" / "staging"
+        self.assertTrue((staging_dir / "stg_calendar.sql").exists(), "stg_calendar.sql missing")
+        self.assertTrue((staging_dir / "stg_sales.sql").exists(), "stg_sales.sql missing")
+        self.assertTrue((staging_dir / "stg_sell_prices.sql").exists(), "stg_sell_prices.sql missing")
+        self.assertTrue((staging_dir / "staging_schema.yml").exists(), "staging_schema.yml missing")
+
+        # Mart models
+        marts_dir = dbt_dir / "models" / "marts"
+        self.assertTrue((marts_dir / "fct_daily_sales.sql").exists(), "fct_daily_sales.sql missing")
+        self.assertTrue((marts_dir / "agg_weekly_sales.sql").exists(), "agg_weekly_sales.sql missing")
+        self.assertTrue((marts_dir / "agg_monthly_sales.sql").exists(), "agg_monthly_sales.sql missing")
+        self.assertTrue((marts_dir / "mart_inventory_replenishment.sql").exists(), "mart_inventory_replenishment.sql missing")
+        self.assertTrue((marts_dir / "mart_forecast_evaluation.sql").exists(), "mart_forecast_evaluation.sql missing")
+        self.assertTrue((marts_dir / "marts_schema.yml").exists(), "marts_schema.yml missing")
+
 
 def run_tests_and_report():
     """Runs all test cases and exports reports/test_validation_report.json."""
