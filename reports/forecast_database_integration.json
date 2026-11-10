@@ -1,0 +1,150 @@
+{
+  "timestamp": "2026-11-10T20:21:29.448738",
+  "total_records": 560,
+  "forecast_horizon_days": 28,
+  "models": [
+    "LightGBM_Tweedie",
+    "Prophet"
+  ],
+  "benchmarks": {
+    "LightGBM_Tweedie": {
+      "total_actual_units": 1231764,
+      "total_forecast_units": 1188500.9,
+      "overall_wape_pct": 6.8,
+      "overall_mae_units": 298.9,
+      "overall_rmse_units": 398.9,
+      "store_breakdown": {
+        "CA_1": {
+          "actual_units": 134032,
+          "forecast_units": 128709.0,
+          "wape_pct": 5.33,
+          "mae_units": 255.3
+        },
+        "CA_2": {
+          "actual_units": 132920,
+          "forecast_units": 123007.1,
+          "wape_pct": 9.22,
+          "mae_units": 437.8
+        },
+        "CA_3": {
+          "actual_units": 175360,
+          "forecast_units": 181281.1,
+          "wape_pct": 4.97,
+          "mae_units": 311.1
+        },
+        "CA_4": {
+          "actual_units": 78858,
+          "forecast_units": 74261.5,
+          "wape_pct": 7.28,
+          "mae_units": 205.1
+        },
+        "TX_1": {
+          "actual_units": 97531,
+          "forecast_units": 93743.7,
+          "wape_pct": 6.97,
+          "mae_units": 242.9
+        },
+        "TX_2": {
+          "actual_units": 115258,
+          "forecast_units": 113720.9,
+          "wape_pct": 5.68,
+          "mae_units": 233.8
+        },
+        "TX_3": {
+          "actual_units": 116610,
+          "forecast_units": 108342.3,
+          "wape_pct": 8.3,
+          "mae_units": 345.6
+        },
+        "WI_1": {
+          "actual_units": 112444,
+          "forecast_units": 105613.6,
+          "wape_pct": 7.46,
+          "mae_units": 299.7
+        },
+        "WI_2": {
+          "actual_units": 153976,
+          "forecast_units": 150351.9,
+          "wape_pct": 7.3,
+          "mae_units": 401.4
+        },
+        "WI_3": {
+          "actual_units": 114775,
+          "forecast_units": 109469.9,
+          "wape_pct": 6.26,
+          "mae_units": 256.6
+        }
+      }
+    },
+    "Prophet": {
+      "total_actual_units": 1231764,
+      "total_forecast_units": 1150621.4,
+      "overall_wape_pct": 7.79,
+      "overall_mae_units": 342.5,
+      "overall_rmse_units": 447.8,
+      "store_breakdown": {
+        "CA_1": {
+          "actual_units": 134032,
+          "forecast_units": 125835.9,
+          "wape_pct": 6.38,
+          "mae_units": 305.4
+        },
+        "CA_2": {
+          "actual_units": 132920,
+          "forecast_units": 129362.5,
+          "wape_pct": 4.68,
+          "mae_units": 222.3
+        },
+        "CA_3": {
+          "actual_units": 175360,
+          "forecast_units": 174302.8,
+          "wape_pct": 4.06,
+          "mae_units": 254.3
+        },
+        "CA_4": {
+          "actual_units": 78858,
+          "forecast_units": 72645.2,
+          "wape_pct": 8.41,
+          "mae_units": 236.9
+        },
+        "TX_1": {
+          "actual_units": 97531,
+          "forecast_units": 90486.4,
+          "wape_pct": 8.63,
+          "mae_units": 300.5
+        },
+        "TX_2": {
+          "actual_units": 115258,
+          "forecast_units": 110100.6,
+          "wape_pct": 6.49,
+          "mae_units": 267.0
+        },
+        "TX_3": {
+          "actual_units": 116610,
+          "forecast_units": 106607.0,
+          "wape_pct": 8.84,
+          "mae_units": 368.0
+        },
+        "WI_1": {
+          "actual_units": 112444,
+          "forecast_units": 103462.1,
+          "wape_pct": 8.43,
+          "mae_units": 338.4
+        },
+        "WI_2": {
+          "actual_units": 153976,
+          "forecast_units": 133394.8,
+          "wape_pct": 13.48,
+          "mae_units": 741.3
+        },
+        "WI_3": {
+          "actual_units": 114775,
+          "forecast_units": 104424.1,
+          "wape_pct": 9.55,
+          "mae_units": 391.4
+        }
+      }
+    }
+  },
+  "integration_status": "SUCCESS"
+}
