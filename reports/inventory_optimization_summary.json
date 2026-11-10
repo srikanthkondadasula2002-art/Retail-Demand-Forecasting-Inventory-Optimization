@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-11-10T20:27:28.371644",
+  "parameters": {
+    "lead_time_days": 7,
+    "target_service_level": 0.95,
+    "order_setup_cost_usd": 50.0,
+    "annual_holding_cost_rate": 0.25,
+    "z_score": 1.645
+  },
+  "network_totals": {
+    "total_series_evaluated": 30490,
+    "total_safety_stock_units": 214389,
+    "total_lead_time_demand_units": 255739,
+    "total_reorder_point_units": 470128,
+    "total_annual_holding_cost_usd": 1964126.96,
+    "total_annual_ordering_cost_usd": 1830097.46,
+    "total_annual_inventory_cost_usd": 3794224.42,
+    "median_eoq_order_units": 160,
+    "median_orders_per_year": 1.0
+  },
+  "department_breakdown": {
+    "FOODS_1": {
+      "safety_stock": 17576,
+      "reorder_point": 37289,
+      "annual_total_cost": 275705.4
+    },
+    "FOODS_2": {
+      "safety_stock": 26686,
+      "reorder_point": 56593,
+      "annual_total_cost": 510691.48
+    },
+    "FOODS_3": {
+      "safety_stock": 89416,
+      "reorder_point": 212024,
+      "annual_total_cost": 1197258.18
+    },
+    "HOBBIES_1": {
+      "safety_stock": 23608,
+      "reorder_point": 46166,
+      "annual_total_cost": 492408.34
+    },
+    "HOBBIES_2": {
+      "safety_stock": 4326,
+      "reorder_point": 7015,
+      "annual_total_cost": 70620.57
+    },
+    "HOUSEHOLD_1": {
+      "safety_stock": 36611,
+      "reorder_point": 81368,
+      "annual_total_cost": 780232.37
+    },
+    "HOUSEHOLD_2": {
+      "safety_stock": 16166,
+      "reorder_point": 29673,
+      "annual_total_cost": 467308.09
+    }
+  }
+}

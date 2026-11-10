@@ -11,6 +11,7 @@ import os
 import sys
 import pandas as pd
 import numpy as np
+import scipy.stats as stats
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
@@ -95,6 +96,13 @@ def load_forecast_data():
         df_fc = pd.read_parquet(fc_path)
         df_fc["date"] = pd.to_datetime(df_fc["date"])
         return df_fc
+    return pd.DataFrame()
+
+@st.cache_data(show_spinner="Loading inventory policies telemetry...")
+def load_inventory_data():
+    inv_path = os.path.join(PROCESSED_DIR, "inventory_recommendations.parquet")
+    if os.path.exists(inv_path):
+        return pd.read_parquet(inv_path)
     return pd.DataFrame()
 
 df_daily, df_prod = load_data()
@@ -660,12 +668,217 @@ elif dashboard_mode == "🔮 Demand Forecasting (Prophet vs LightGBM)":
         )
 
 # ==============================================================================
-# VIEW 3: INVENTORY OPTIMIZATION PLACEHOLDER (POPULATED IN NEXT MILESTONE)
+# VIEW 3: INVENTORY OPTIMIZATION DASHBOARD
 # ==============================================================================
 elif dashboard_mode == "📦 Inventory Optimization":
     st.title("📦 Retail Inventory Optimization Engine")
-    st.markdown("Automated calculation of Safety Stock, Reorder Points (ROP), and Economic Order Quantities (EOQ).")
-    st.info("Inventory optimization parameters and recommendations will load here.")
+    st.markdown("Automated calculation of Safety Stock, Reorder Points (ROP), and Economic Order Quantities (EOQ) under stochastic demand.")
+
+    df_inv_raw = load_inventory_data()
+    if df_inv_raw.empty:
+        st.error("Inventory dataset not found. Please run `python src/inventory_optimizer.py` to generate recommendations.")
+    else:
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("Replenishment Parameters")
+
+        # Interactive parameter controls
+        csl_options = [0.90, 0.95, 0.98, 0.99, 0.995]
+        selected_csl = st.sidebar.select_slider(
+            "Cycle Service Level (CSL)",
+            options=csl_options,
+            value=0.95,
+            format_func=lambda x: f"{x*100:.1f}%"
+        )
+        lead_time = st.sidebar.slider("Supplier Lead Time (Days)", min_value=1, max_value=21, value=7)
+        order_cost = st.sidebar.number_input("Purchase Order Setup Cost ($)", min_value=10.0, max_value=300.0, value=50.0, step=10.0)
+        holding_rate = st.sidebar.slider("Annual Holding Cost Rate (%)", min_value=10, max_value=40, value=25) / 100.0
+
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("Filter Scope")
+        inv_stores = ["All Stores"] + sorted(df_inv_raw["store_id"].unique().tolist())
+        selected_inv_store = st.sidebar.selectbox("Store Filter", inv_stores, index=0)
+
+        inv_cats = ["All Categories"] + sorted(df_inv_raw["cat_id"].unique().tolist())
+        selected_inv_cat = st.sidebar.selectbox("Category Filter", inv_cats, index=0)
+
+        # Dynamic recalculation based on user sliders
+        z_val = float(stats.norm.ppf(selected_csl))
+        df_inv = df_inv_raw.copy()
+
+        if selected_inv_store != "All Stores":
+            df_inv = df_inv[df_inv["store_id"] == selected_inv_store]
+        if selected_inv_cat != "All Categories":
+            df_inv = df_inv[df_inv["cat_id"] == selected_inv_cat]
+
+        # Recompute with live sliders
+        df_inv["safety_stock"] = np.ceil(z_val * df_inv["std_daily_units"] * np.sqrt(lead_time)).astype(int)
+        df_inv["lead_time_demand"] = np.ceil(df_inv["mean_daily_units"] * lead_time).astype(int)
+        df_inv["reorder_point"] = df_inv["lead_time_demand"] + df_inv["safety_stock"]
+        df_inv["holding_cost_annual"] = df_inv["unit_cost"] * holding_rate
+        df_inv["eoq_units"] = np.ceil(np.sqrt((2 * df_inv["annual_demand"] * order_cost) / df_inv["holding_cost_annual"])).astype(int)
+        df_inv["annual_ordering_cost"] = (df_inv["annual_demand"] / df_inv["eoq_units"]) * order_cost
+        df_inv["annual_holding_cost"] = ((df_inv["eoq_units"] / 2) + df_inv["safety_stock"]) * df_inv["holding_cost_annual"]
+        df_inv["annual_total_cost"] = df_inv["annual_ordering_cost"] + df_inv["annual_holding_cost"]
+        df_inv["orders_per_year"] = np.round(df_inv["annual_demand"] / df_inv["eoq_units"], 1)
+
+        # KPI Metrics Cards
+        tot_ss = int(df_inv["safety_stock"].sum())
+        tot_rop = int(df_inv["reorder_point"].sum())
+        med_eoq = int(df_inv["eoq_units"].median())
+        tot_inv_cost = float(df_inv["annual_total_cost"].sum())
+        stockout_risk = (1.0 - selected_csl) * 100
+
+        k1, k2, k3, k4, k5 = st.columns(5)
+        with k1:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-title">Total Safety Stock</div>
+                <div class="metric-value">{tot_ss:,.0f}</div>
+                <div class="metric-sub sub-green">Buffer Units (Z={z_val:.2f})</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with k2:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-title">Total Reorder Point</div>
+                <div class="metric-value">{tot_rop:,.0f}</div>
+                <div class="metric-sub sub-muted">Trigger Units (LTD + SS)</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with k3:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-title">Median EOQ Order</div>
+                <div class="metric-value">{med_eoq:,}</div>
+                <div class="metric-sub sub-muted">Units per Replenishment</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with k4:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-title">Annual Policy Cost</div>
+                <div class="metric-value">${tot_inv_cost:,.0f}</div>
+                <div class="metric-sub sub-muted">Holding + Setup Costs</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with k5:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-title">Stockout Risk</div>
+                <div class="metric-value">{stockout_risk:.1f}%</div>
+                <div class="metric-sub sub-green">Target CSL: {selected_csl*100:.1f}%</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Visualizations
+        col_inv1, col_inv2 = st.columns(2)
+
+        with col_inv1:
+            dept_breakdown = df_inv.groupby("dept_id").agg({
+                "lead_time_demand": "sum",
+                "safety_stock": "sum"
+            }).reset_index().sort_values("lead_time_demand", ascending=True)
+
+            fig_rop = go.Figure()
+            fig_rop.add_trace(go.Bar(
+                y=dept_breakdown["dept_id"],
+                x=dept_breakdown["lead_time_demand"],
+                name="Lead Time Demand (LTD)",
+                orientation="h",
+                marker_color="#3b82f6"
+            ))
+            fig_rop.add_trace(go.Bar(
+                y=dept_breakdown["dept_id"],
+                x=dept_breakdown["safety_stock"],
+                name="Safety Stock Buffer (SS)",
+                orientation="h",
+                marker_color="#10b981"
+            ))
+            fig_rop.update_layout(
+                title=f"Reorder Point Composition by Department ({selected_inv_store})",
+                barmode="stack",
+                xaxis_title="Units",
+                yaxis_title="Department",
+                template="plotly_white",
+                height=400,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+            st.plotly_chart(fig_rop, use_container_width=True)
+
+        with col_inv2:
+            # Service level non-linear multiplier curve
+            csl_grid = np.linspace(0.85, 0.999, 100)
+            z_grid = [stats.norm.ppf(c) for c in csl_grid]
+            base_buffer = df_inv["std_daily_units"].median() * np.sqrt(lead_time)
+            buffer_grid = [z * base_buffer for z in z_grid]
+
+            fig_csl = go.Figure()
+            fig_csl.add_trace(go.Scatter(
+                x=csl_grid * 100,
+                y=buffer_grid,
+                mode="lines",
+                line=dict(color="#7c3aed", width=3),
+                name="Required Buffer"
+            ))
+            fig_csl.add_vline(x=selected_csl * 100, line_dash="dash", line_color="#10b981",
+                              annotation_text=f"Selected: {selected_csl*100:.1f}%", annotation_position="top left")
+            fig_csl.update_layout(
+                title="Safety Stock Buffer vs. Target Service Level (Non-Linear Curve)",
+                xaxis_title="Cycle Service Level (%)",
+                yaxis_title="Safety Stock Units (Median SKU)",
+                template="plotly_white",
+                height=400
+            )
+            st.plotly_chart(fig_csl, use_container_width=True)
+
+        # Interactive Table: Top 100 Recommended Reorder Policies
+        st.markdown("### 📋 Automated Reorder Recommendations Matrix")
+        policy_table = df_inv[[
+            "item_id", "store_id", "dept_id", "cat_id",
+            "mean_daily_units", "std_daily_units", "unit_cost",
+            "safety_stock", "lead_time_demand", "reorder_point",
+            "eoq_units", "orders_per_year", "annual_total_cost"
+        ]].sort_values("annual_total_cost", ascending=False).head(100).rename(columns={
+            "item_id": "Item ID",
+            "store_id": "Store",
+            "dept_id": "Department",
+            "cat_id": "Category",
+            "mean_daily_units": "Daily Demand",
+            "std_daily_units": "Daily Std",
+            "unit_cost": "Unit Cost ($)",
+            "safety_stock": "Safety Stock",
+            "lead_time_demand": "Lead Time Demand",
+            "reorder_point": "Reorder Point (ROP)",
+            "eoq_units": "EOQ Order Size",
+            "orders_per_year": "Orders/Yr",
+            "annual_total_cost": "Annual Cost ($)"
+        })
+
+        st.dataframe(
+            policy_table.style.format({
+                "Daily Demand": "{:,.2f}",
+                "Daily Std": "{:,.2f}",
+                "Unit Cost ($)": "${:,.2f}",
+                "Safety Stock": "{:,.0f}",
+                "Lead Time Demand": "{:,.0f}",
+                "Reorder Point (ROP)": "{:,.0f}",
+                "EOQ Order Size": "{:,.0f}",
+                "Orders/Yr": "{:.1f}",
+                "Annual Cost ($)": "${:,.2f}"
+            }),
+            use_container_width=True,
+            height=320
+        )
+
+        csv_inv = policy_table.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Export Inventory Policies & Reorder Recommendations (CSV)",
+            data=csv_inv,
+            file_name=f"inventory_policies_recommendations_{selected_inv_store}.csv",
+            mime="text/csv"
+        )
 
 # ==============================================================================
 # VIEW 4: PRICE DROP SCENARIO SIMULATION PLACEHOLDER (POPULATED IN NEXT MILESTONE)
