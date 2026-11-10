@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-11-10T20:30:18.034468",
+  "scenario": {
+    "name": "10% Price Reduction Across Catalog",
+    "price_drop_percentage": -10.0,
+    "category_elasticities": {
+      "FOODS": -0.85,
+      "HOUSEHOLD": -1.15,
+      "HOBBIES": -1.45
+    }
+  },
+  "network_impact": {
+    "baseline_units": 65695409,
+    "simulated_units": 72081457,
+    "demand_units_lift": 6386048,
+    "demand_lift_pct": 9.72,
+    "baseline_gross_revenue_usd": 188400293.52,
+    "simulated_gross_revenue_usd": 186720266.42,
+    "revenue_delta_usd": -1680027.1,
+    "revenue_percentage_change": -0.89,
+    "additional_safety_stock_required_units": 31843,
+    "stockout_risk_mitigation": "Increase safety stock by additional buffer to maintain 95% CSL"
+  },
+  "category_breakdown": {
+    "FOODS": {
+      "total_units": 45089939,
+      "simulated_units": 48922584,
+      "baseline_revenue": 109503557.44,
+      "simulated_revenue": 106930243.87
+    },
+    "HOBBIES": {
+      "total_units": 6124800,
+      "simulated_units": 7012892,
+      "baseline_revenue": 22857992.74,
+      "simulated_revenue": 23555082.83
+    },
+    "HOUSEHOLD": {
+      "total_units": 14480670,
+      "simulated_units": 16145981,
+      "baseline_revenue": 56038743.34,
+      "simulated_revenue": 56234939.72
+    }
+  }
+}

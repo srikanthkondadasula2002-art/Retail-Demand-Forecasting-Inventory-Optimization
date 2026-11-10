@@ -881,9 +881,236 @@ elif dashboard_mode == "📦 Inventory Optimization":
         )
 
 # ==============================================================================
-# VIEW 4: PRICE DROP SCENARIO SIMULATION PLACEHOLDER (POPULATED IN NEXT MILESTONE)
+# VIEW 4: PRICE DROP SCENARIO SIMULATION
 # ==============================================================================
 elif dashboard_mode == "🏷️ Price Drop Scenario Simulation":
     st.title("🏷️ What-If Scenario Analysis: Price Drop Simulation")
-    st.markdown("Simulate retail price elasticity, demand surges, revenue impact, and stockout risk.")
-    st.info("Interactive scenario inputs will load here.")
+    st.markdown("Simulate retail price elasticity, demand surges, gross revenue impact, and required safety stock adjustments.")
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("What-If Price Controls")
+
+    # Interactive price slider
+    price_change_pct = st.sidebar.slider(
+        "Catalog Price Adjustment (%)",
+        min_value=-30,
+        max_value=10,
+        value=-10,
+        step=1,
+        help="Simulate an across-the-board percentage price change."
+    )
+
+    with st.sidebar.expander("Elasticity Assumptions by Category"):
+        foods_elast = st.slider("FOODS Elasticity", min_value=-1.5, max_value=-0.2, value=-0.85, step=0.05)
+        house_elast = st.slider("HOUSEHOLD Elasticity", min_value=-2.0, max_value=-0.5, value=-1.15, step=0.05)
+        hobby_elast = st.slider("HOBBIES Elasticity", min_value=-2.5, max_value=-0.5, value=-1.45, step=0.05)
+
+    elasticity_map = {
+        "FOODS": foods_elast,
+        "HOUSEHOLD": house_elast,
+        "HOBBIES": hobby_elast
+    }
+
+    # Store filter
+    sim_stores = ["All Stores"] + sorted(df_prod["store_id"].unique().tolist())
+    selected_sim_store = st.sidebar.selectbox("Store Filter", sim_stores, index=0)
+
+    # Filter data
+    df_sim_base = df_prod.copy()
+    if selected_sim_store != "All Stores":
+        df_sim_base = df_sim_base[df_sim_base["store_id"] == selected_sim_store]
+
+    # Calculate simulation metrics
+    df_sim_base["elasticity"] = df_sim_base["cat_id"].map(elasticity_map).fillna(-1.0)
+    df_sim_base["demand_lift_pct"] = df_sim_base["elasticity"] * price_change_pct
+    df_sim_base["simulated_units"] = np.round(df_sim_base["total_units"] * (1.0 + (df_sim_base["demand_lift_pct"] / 100.0))).astype(int)
+
+    delta_p_ratio = price_change_pct / 100.0
+    df_sim_base["baseline_price"] = df_sim_base["avg_sell_price"]
+    df_sim_base["simulated_price"] = df_sim_base["baseline_price"] * (1.0 + delta_p_ratio)
+
+    df_sim_base["baseline_revenue"] = df_sim_base["est_revenue"]
+    df_sim_base["simulated_revenue"] = df_sim_base["simulated_units"] * df_sim_base["simulated_price"]
+    df_sim_base["revenue_delta"] = df_sim_base["simulated_revenue"] - df_sim_base["baseline_revenue"]
+
+    # Supply chain impact
+    base_tot_units = int(df_sim_base["total_units"].sum())
+    sim_tot_units = int(df_sim_base["simulated_units"].sum())
+    unit_lift_pct = ((sim_tot_units - base_tot_units) / base_tot_units) * 100
+
+    base_tot_rev = float(df_sim_base["baseline_revenue"].sum())
+    sim_tot_rev = float(df_sim_base["simulated_revenue"].sum())
+    rev_delta = sim_tot_rev - base_tot_rev
+    rev_lift_pct = (rev_delta / base_tot_rev) * 100
+
+    # Additional buffer required
+    z_score = 1.645
+    lift_mult = np.sqrt(1.0 + max(0.0, unit_lift_pct / 100.0))
+    approx_base_ss = (base_tot_units / 1913.0) * np.sqrt(7) * z_score * 0.8
+    approx_new_ss = approx_base_ss * lift_mult
+    extra_ss_needed = int(max(0, approx_new_ss - approx_base_ss))
+    unbuffered_stockout_risk = min(40.0, 5.0 * (1.0 + (unit_lift_pct / 10.0))) if unit_lift_pct > 0 else 5.0
+
+    # KPI Metrics Cards
+    s1, s2, s3, s4, s5 = st.columns(5)
+    with s1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Price Adjustment</div>
+            <div class="metric-value">{price_change_pct:+d}%</div>
+            <div class="metric-sub sub-muted">Catalog-wide shift</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with s2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Demand Volume Lift</div>
+            <div class="metric-value">{unit_lift_pct:+.1f}%</div>
+            <div class="metric-sub sub-green">{sim_tot_units - base_tot_units:+,.0f} Units</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with s3:
+        rev_color = "sub-green" if rev_delta >= 0 else "sub-muted"
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Net Revenue Impact</div>
+            <div class="metric-value">${rev_delta/1e6:+.2f}M</div>
+            <div class="metric-sub {rev_color}">{rev_lift_pct:+.2f}% Gross Change</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with s4:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Safety Stock Needed</div>
+            <div class="metric-value">+{extra_ss_needed:,.0f}</div>
+            <div class="metric-sub sub-muted">Buffer to maintain 95% CSL</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with s5:
+        risk_color = "sub-muted" if unbuffered_stockout_risk <= 5.0 else "sub-green"
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Unbuffered Risk</div>
+            <div class="metric-value">{unbuffered_stockout_risk:.1f}%</div>
+            <div class="metric-sub {risk_color}">Stockout rate if unbuffered</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Visualizations
+    sim_col1, sim_col2 = st.columns(2)
+
+    with sim_col1:
+        dept_sim = df_sim_base.groupby(["cat_id", "dept_id"]).agg({
+            "total_units": "sum",
+            "simulated_units": "sum"
+        }).reset_index().sort_values("total_units", ascending=True)
+
+        fig_dept_sim = go.Figure()
+        fig_dept_sim.add_trace(go.Bar(
+            y=dept_sim["dept_id"],
+            x=dept_sim["total_units"],
+            name="Baseline Units",
+            orientation="h",
+            marker_color="#64748b"
+        ))
+        fig_dept_sim.add_trace(go.Bar(
+            y=dept_sim["dept_id"],
+            x=dept_sim["simulated_units"],
+            name=f"Simulated Units ({price_change_pct:+d}%)",
+            orientation="h",
+            marker_color="#10b981"
+        ))
+        fig_dept_sim.update_layout(
+            title="Department Unit Volume: Baseline vs. Simulated",
+            xaxis_title="Units Sold",
+            yaxis_title="Department",
+            barmode="group",
+            template="plotly_white",
+            height=400,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
+        st.plotly_chart(fig_dept_sim, use_container_width=True)
+
+    with sim_col2:
+        # Sensitivity curve from -30% to +10%
+        sweep_p = np.linspace(-30, 10, 41)
+        sweep_rev = []
+        for p in sweep_p:
+            p_rat = p / 100.0
+            u_lift = np.sum(df_sim_base["total_units"] * (1.0 + (df_sim_base["elasticity"] * p / 100.0)))
+            r_sim = np.sum(df_sim_base["total_units"] * (1.0 + (df_sim_base["elasticity"] * p / 100.0)) * df_sim_base["baseline_price"] * (1.0 + p_rat))
+            sweep_rev.append(r_sim / 1e6)
+
+        fig_sens = go.Figure()
+        fig_sens.add_trace(go.Scatter(
+            x=sweep_p,
+            y=sweep_rev,
+            mode="lines",
+            line=dict(color="#2563eb", width=3),
+            name="Projected Revenue ($M)"
+        ))
+        fig_sens.add_vline(x=price_change_pct, line_dash="dash", line_color="#10b981",
+                           annotation_text=f"Current: {price_change_pct:+d}%", annotation_position="top left")
+        fig_sens.add_vline(x=0, line_dash="dot", line_color="#64748b",
+                           annotation_text="Status Quo (0%)", annotation_position="bottom right")
+
+        fig_sens.update_layout(
+            title="Revenue Sensitivity Curve Across Price Adjustments (-30% to +10%)",
+            xaxis_title="Catalog Price Adjustment (%)",
+            yaxis_title="Projected Gross Revenue ($ Millions)",
+            template="plotly_white",
+            height=400
+        )
+        st.plotly_chart(fig_sens, use_container_width=True)
+
+    # Detailed Department Simulation Table
+    st.markdown("### 📋 Department-Level Scenario Breakdown")
+    dept_table = df_sim_base.groupby(["cat_id", "dept_id"]).agg({
+        "baseline_price": "mean",
+        "simulated_price": "mean",
+        "total_units": "sum",
+        "simulated_units": "sum",
+        "baseline_revenue": "sum",
+        "simulated_revenue": "sum"
+    }).reset_index()
+
+    dept_table["Unit Lift (%)"] = ((dept_table["simulated_units"] - dept_table["total_units"]) / dept_table["total_units"]) * 100
+    dept_table["Revenue Delta ($)"] = dept_table["simulated_revenue"] - dept_table["baseline_revenue"]
+    dept_table["Revenue Lift (%)"] = (dept_table["Revenue Delta ($)"] / dept_table["baseline_revenue"]) * 100
+
+    display_sim_table = dept_table.rename(columns={
+        "cat_id": "Category",
+        "dept_id": "Department",
+        "baseline_price": "Base Price ($)",
+        "simulated_price": "New Price ($)",
+        "total_units": "Base Units",
+        "simulated_units": "Simulated Units",
+        "baseline_revenue": "Base Revenue ($)",
+        "simulated_revenue": "Simulated Revenue ($)"
+    })
+
+    st.dataframe(
+        display_sim_table.style.format({
+            "Base Price ($)": "${:,.2f}",
+            "New Price ($)": "${:,.2f}",
+            "Base Units": "{:,.0f}",
+            "Simulated Units": "{:,.0f}",
+            "Unit Lift (%)": "{:+.1f}%",
+            "Base Revenue ($)": "${:,.0f}",
+            "Simulated Revenue ($)": "${:,.0f}",
+            "Revenue Delta ($)": "${:+,.0f}",
+            "Revenue Lift (%)": "{:+.2f}%"
+        }),
+        use_container_width=True,
+        height=300
+    )
+
+    csv_sim = display_sim_table.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="📥 Export Scenario Simulation Results (CSV)",
+        data=csv_sim,
+        file_name=f"price_drop_scenario_simulation_{price_change_pct}pct.csv",
+        mime="text/csv"
+    )
